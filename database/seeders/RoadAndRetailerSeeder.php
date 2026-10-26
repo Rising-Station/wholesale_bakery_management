@@ -55,9 +55,7 @@ class RoadAndRetailerSeeder extends Seeder
 
         // Sample Retailer Shops for Road A
         $shopsA = [
-            ['shop_name' => 'Al-Madina General Store', 'owner_name' => 'Haji Abdur Rahim', 'phone' => '01721112233', 'address' => 'Shop 12, Main Bazaar, Road A', 'credit_limit' => 20000, 'opening_due' => 4500],
-            ['shop_name' => 'Bismillah Confectionery', 'owner_name' => 'Faruk Ahmed', 'phone' => '01819998877', 'address' => 'Near Central Mosque, Road A', 'credit_limit' => 15000, 'opening_due' => 2800],
-            ['shop_name' => 'Popular Bakery & Tea Stall', 'owner_name' => 'Kamal Hossain', 'phone' => '01912345678', 'address' => 'Bus Stand Corner, Road A', 'credit_limit' => 10000, 'opening_due' => 0],
+            ['shop_name' => 'Popular Bakery & Tea Stall', 'owner_name' => 'Kamal Hossain', 'phone' => '01912345678', 'address' => 'Bus Stand Corner, Road A', 'credit_limit' => 0, 'opening_due' => 0],
         ];
 
         foreach ($shopsA as $shop) {
@@ -77,8 +75,7 @@ class RoadAndRetailerSeeder extends Seeder
 
         // Sample Retailer Shops for Road B
         $shopsB = [
-            ['shop_name' => 'Rahman Grocery', 'owner_name' => 'Matiur Rahman', 'phone' => '01715554433', 'address' => 'Station Road Gate #2', 'credit_limit' => 12000, 'opening_due' => 1500],
-            ['shop_name' => 'Sagorika Snacks Corner', 'owner_name' => 'Sohag Mia', 'phone' => '01612223344', 'address' => 'East Bypass Turning', 'credit_limit' => 8000, 'opening_due' => 3200],
+            ['shop_name' => 'Rahman Grocery', 'owner_name' => 'Matiur Rahman', 'phone' => '01715554433', 'address' => 'Station Road Gate #2', 'credit_limit' => 0, 'opening_due' => 0],
         ];
 
         foreach ($shopsB as $shop) {
@@ -98,7 +95,7 @@ class RoadAndRetailerSeeder extends Seeder
 
         // Sample Retailer Shops for Road C
         $shopsC = [
-            ['shop_name' => 'Jannat Store', 'owner_name' => 'Abul Kashem', 'phone' => '01734445566', 'address' => 'North College Mor', 'credit_limit' => 25000, 'opening_due' => 6000],
+            ['shop_name' => 'Jannat Store', 'owner_name' => 'Abul Kashem', 'phone' => '01734445566', 'address' => 'North College Mor', 'credit_limit' => 0, 'opening_due' => 0],
         ];
 
         foreach ($shopsC as $shop) {

@@ -4,11 +4,14 @@ import '../css/app.css';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import PrimeVue from 'primevue/config';
-import Aura from '@primeuix/themes/aura';
+import Aura from '@primevue/themes/aura';
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import DialogService from 'primevue/dialogservice';
 import Tooltip from 'primevue/tooltip';
+import { route } from './routes';
+
+window.route = route;
 
 const appName = import.meta.env.VITE_APP_NAME || 'Mominul Bekari ERP';
 
@@ -24,6 +27,8 @@ createInertiaApp({
     },
     setup({ el, App, props, plugin }) {
         const vueApp = createApp({ render: () => h(App, props) });
+
+        vueApp.config.globalProperties.route = route;
 
         vueApp.use(plugin);
         vueApp.use(PrimeVue, {

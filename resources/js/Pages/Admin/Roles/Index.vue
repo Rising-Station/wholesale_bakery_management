@@ -63,19 +63,25 @@ const isGroupSelected = (groupPermissions) => {
     return permNames.every((p) => form.permissions.includes(p));
 };
 
+const resetRoleForm = () => {
+    form.reset();
+    form.clearErrors();
+    form.permissions = [];
+    editingRole.value = null;
+    showModal.value = false;
+};
+
 const submitRole = () => {
     if (editingRole.value) {
         form.put(`/roles/${editingRole.value.id}`, {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRoleForm();
             },
         });
     } else {
         form.post('/roles', {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRoleForm();
             },
         });
     }
@@ -187,6 +193,7 @@ const executeDelete = () => {
             <Dialog
                 v-model:visible="showModal"
                 :modal="true"
+                @hide="resetRoleForm"
                 :header="editingRole ? `Edit Role: ${editingRole.name}` : 'Create New Role'"
                 class="w-full max-w-3xl"
             >

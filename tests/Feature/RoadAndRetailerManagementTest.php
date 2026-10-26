@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\RetailerShop;
 use App\Models\Road;
+use App\Models\User;
 use Database\Seeders\RoadAndRetailerSeeder;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +19,10 @@ class RoadAndRetailerManagementTest extends TestCase
         parent::setUp();
         $this->seed(RoleAndPermissionSeeder::class);
         $this->seed(RoadAndRetailerSeeder::class);
+
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole('SuperAdmin');
+        $this->actingAs($admin);
     }
 
     public function test_roads_index_renders_successfully(): void

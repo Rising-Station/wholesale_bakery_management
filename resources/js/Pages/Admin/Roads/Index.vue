@@ -66,19 +66,24 @@ const onDriverSelected = (event) => {
     }
 };
 
+const resetRoadForm = () => {
+    form.reset();
+    form.clearErrors();
+    editingRoad.value = null;
+    showModal.value = false;
+};
+
 const submitRoad = () => {
     if (editingRoad.value) {
         form.put(`/roads/${editingRoad.value.id}`, {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRoadForm();
             },
         });
     } else {
         form.post('/roads', {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRoadForm();
             },
         });
     }
@@ -201,6 +206,7 @@ const executeDelete = () => {
             <Dialog
                 v-model:visible="showModal"
                 :modal="true"
+                @hide="resetRoadForm"
                 :header="editingRoad ? `Edit Road: ${editingRoad.name}` : 'Add New Road Route'"
                 class="w-full max-w-lg"
             >

@@ -14,7 +14,7 @@ trait HasAuditTrail
     public static function bootHasAuditTrail(): void
     {
         static::creating(function ($model): void {
-            if (empty($model->created_by) && Auth::check()) {
+            if (empty($model->created_by) && Auth::check() && in_array('created_by', $model->getFillable(), true)) {
                 $model->created_by = Auth::id();
             }
         });

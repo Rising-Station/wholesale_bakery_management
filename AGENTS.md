@@ -67,6 +67,8 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 ## Project Rules
 
 - This project contains committed, area-grouped rules in `.ai/rules` when that directory exists, including path-scoped framework guidelines under `.ai/rules/boost`. Before you enter plan mode or create/edit any file, you MUST first: open @.ai/rules/index.md (it maps file globs to rule files), read every rule file whose globs cover the path(s) in scope, and run `grep -rin 'keyword' .ai/rules` to catch what a path match alone misses. Do not write code until you have read and are following every matching rule. If `.ai/rules` does not exist, continue without it.
+- **Wholesale Bakery Implementation Plan**: [.agents/rules/wholesale_bakeri_implementition_plan.md](file:///Users/alamin/Herd/wholesale_bakery_system/.agents/rules/wholesale_bakeri_implementition_plan.md)
+- **Wholesale Bakery Progress Tracker**: [.agents/rules/PROGRESS_TRACKER.md](file:///Users/alamin/Herd/wholesale_bakery_system/.agents/rules/PROGRESS_TRACKER.md)
 
 ## Artisan
 

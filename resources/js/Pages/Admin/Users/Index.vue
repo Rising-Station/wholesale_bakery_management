@@ -80,19 +80,24 @@ const openEditModal = (user) => {
     showModal.value = true;
 };
 
+const resetUserForm = () => {
+    form.reset();
+    form.clearErrors();
+    editingUser.value = null;
+    showModal.value = false;
+};
+
 const submitUser = () => {
     if (editingUser.value) {
         form.put(`/users/${editingUser.value.id}`, {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetUserForm();
             },
         });
     } else {
         form.post('/users', {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetUserForm();
             },
         });
     }
@@ -258,6 +263,7 @@ const executeDelete = () => {
             <Dialog
                 v-model:visible="showModal"
                 :modal="true"
+                @hide="resetUserForm"
                 :header="editingUser ? `Edit User: ${editingUser.name}` : 'Create New User'"
                 class="w-full max-w-lg"
             >

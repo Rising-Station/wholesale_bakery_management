@@ -38,7 +38,7 @@ const formatMoney = (val) => {
 
                 <div class="flex items-center gap-2">
                     <Link
-                        :href="`/memos/create?retailer_id=${retailer.id}&road_id=${retailer.road_id}`"
+                        :href="`/memos?action=create&retailer_id=${retailer.id}&road_id=${retailer.road_id}`"
                         class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm transition"
                     >
                         <i class="pi pi-plus text-xs"></i>

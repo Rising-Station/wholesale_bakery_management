@@ -261,7 +261,7 @@ const isCurrentRoute = (url) => {
                     <div class="flex items-center gap-3">
                         <!-- Quick Link for Memo -->
                         <Link
-                            href="/memos/create"
+                            href="/memos?action=create"
                             class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs transition shadow-xs"
                         >
                             <i class="pi pi-plus-circle text-xs"></i>

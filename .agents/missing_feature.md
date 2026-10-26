@@ -1,0 +1,10 @@
+- Remove Initial stock from product form. Stock in will when purchase from supplier
+- Purchase Invoice View and print
+- Purchase Invoice list export, Supplier / Manufacturer showning (Object object)
+- In this report export /stock/movements columns product, Logged by showing showning (Object object). Check this issue in every export
+- Stock Value report in dashboard
+- Need to add CRUD for Packaging Type and Unit
+- Make Mobile Responsive New Memo Page
+- Need to activate Thermal 80mm tab Slip Printing for /memos/{id}
+- Need to clear form in every modal after submitting or closing it
+- Add 2 categories (Cake, Chanachur), 2 products in seeder (Cake - 100 cartoon, Chanachur 5kg   packet 100 qty)

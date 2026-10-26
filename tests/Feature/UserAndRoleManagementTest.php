@@ -16,6 +16,10 @@ class UserAndRoleManagementTest extends TestCase
     {
         parent::setUp();
         $this->seed(RoleAndPermissionSeeder::class);
+
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole('SuperAdmin');
+        $this->actingAs($admin);
     }
 
     public function test_roles_page_can_be_rendered(): void

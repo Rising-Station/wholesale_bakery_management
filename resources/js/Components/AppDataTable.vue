@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
@@ -9,8 +9,11 @@ import Button from 'primevue/button';
 const props = defineProps({
     value: {
         type: Array,
-        required: true,
         default: () => [],
+    },
+    items: {
+        type: Array,
+        default: null,
     },
     loading: {
         type: Boolean,
@@ -28,6 +31,10 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    tableTitle: {
+        type: String,
+        default: '',
+    },
     searchPlaceholder: {
         type: String,
         default: 'Search records...',
@@ -37,6 +44,15 @@ const props = defineProps({
         default: () => ({}),
     },
 });
+
+const tableData = computed(() => {
+    if (props.items !== null && props.items !== undefined) {
+        return props.items;
+    }
+    return props.value || [];
+});
+
+const displayTitle = computed(() => props.tableTitle || props.title || '');
 
 const emit = defineEmits(['export']);
 const dt = ref();
@@ -52,7 +68,7 @@ const exportCSV = () => {
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <DataTable
             ref="dt"
-            :value="value"
+            :value="tableData"
             :loading="loading"
             :paginator="true"
             :rows="rows"
@@ -68,8 +84,8 @@ const exportCSV = () => {
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-2">
                     <div class="flex items-center gap-2">
                         <slot name="header-left">
-                            <h3 v-if="title" class="font-bold text-slate-800 text-base">
-                                {{ title }}
+                            <h3 v-if="displayTitle" class="font-bold text-slate-800 text-base">
+                                {{ displayTitle }}
                             </h3>
                         </slot>
                     </div>

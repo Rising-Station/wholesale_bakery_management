@@ -93,19 +93,24 @@ const openEditModal = (shop) => {
     showModal.value = true;
 };
 
+const resetRetailerForm = () => {
+    form.reset();
+    form.clearErrors();
+    editingShop.value = null;
+    showModal.value = false;
+};
+
 const submitShop = () => {
     if (editingShop.value) {
         form.put(`/retailers/${editingShop.value.id}`, {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRetailerForm();
             },
         });
     } else {
         form.post('/retailers', {
             onSuccess: () => {
-                showModal.value = false;
-                form.reset();
+                resetRetailerForm();
             },
         });
     }
@@ -215,7 +220,7 @@ const formatMoney = (val) => {
                     </template>
                 </Column>
 
-                <Column field="road" header="Road Route">
+                <Column field="road.name" header="Road Route">
                     <template #body="{ data }">
                         <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200">
                             {{ data.road?.code || 'RD' }} - {{ data.road?.name }}
@@ -300,6 +305,7 @@ const formatMoney = (val) => {
             <Dialog
                 v-model:visible="showModal"
                 :modal="true"
+                @hide="resetRetailerForm"
                 :header="editingShop ? `Edit Retailer: ${editingShop.shop_name}` : 'Register Retailer Shop'"
                 class="w-full max-w-lg"
             >
