@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleTripController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RetailerPayment;
@@ -194,4 +195,9 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
     Route::post('backup', [BackupController::class, 'store'])->name('backup.store');
     Route::get('backup/{backup}/download', [BackupController::class, 'download'])->name('backup.download');
     Route::delete('backup/{backup}', [BackupController::class, 'destroy'])->name('backup.destroy');
+
+    // Profile Management
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });

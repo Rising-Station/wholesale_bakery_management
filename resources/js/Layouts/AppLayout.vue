@@ -31,7 +31,7 @@ const userMenuItems = ref([
     {
         label: 'My Profile',
         icon: 'pi pi-user',
-        command: () => router.visit('/profile'),
+        command: () => router.visit(route('profile.edit')),
     },
     {
         label: 'System Settings',

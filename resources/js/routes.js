@@ -7,6 +7,9 @@ const routePatterns = {
     'login': '/login',
     'logout': '/logout',
     'profile': '/profile',
+    'profile.edit': '/profile',
+    'profile.update': '/profile',
+    'profile.password': '/profile/password',
 
     // Products & Categories
     'products.index': '/products',
