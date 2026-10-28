@@ -10,6 +10,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     trips: {
@@ -244,7 +245,13 @@ const getStatusBadge = (status) => {
                     </template>
                 </Column>
 
-                <Column field="trip_date" header="Date" style="width: 120px" />
+                <Column field="trip_date" header="Date" style="width: 125px">
+                    <template #body="{ data }">
+                        <span class="text-xs text-slate-700 font-medium">
+                            {{ formatDate(data.trip_date) }}
+                        </span>
+                    </template>
+                </Column>
 
                 <Column field="road.name" header="Assigned Road">
                     <template #body="{ data }">

@@ -11,6 +11,7 @@ import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     supplier: {
@@ -141,7 +142,11 @@ const submitPayment = () => {
                             </span>
                         </template>
                     </Column>
-                    <Column field="purchase_date" header="Date" />
+                    <Column field="purchase_date" header="Date">
+                        <template #body="{ data }">
+                            <span class="text-xs text-slate-700 font-medium">{{ formatDate(data.purchase_date) }}</span>
+                        </template>
+                    </Column>
                     <Column header="Products Procured">
                         <template #body="{ data }">
                             <div class="flex flex-wrap gap-1">
@@ -197,7 +202,11 @@ const submitPayment = () => {
                     class="p-datatable-sm"
                     emptyMessage="No payments made to this supplier yet."
                 >
-                    <Column field="payment_date" header="Payment Date" />
+                    <Column field="payment_date" header="Payment Date">
+                        <template #body="{ data }">
+                            <span class="text-xs text-slate-700 font-medium">{{ formatDate(data.payment_date) }}</span>
+                        </template>
+                    </Column>
                     <Column field="payment_method" header="Method">
                         <template #body="{ data }">
                             <Tag :value="data.payment_method" severity="secondary" rounded class="text-[11px]" />

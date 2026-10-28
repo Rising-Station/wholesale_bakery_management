@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     purchase: {
@@ -102,7 +103,7 @@ const printInvoice = () => {
                             Stock-In Purchase Bill
                         </div>
                         <div class="font-mono text-base font-bold text-slate-900">{{ purchase.purchase_no }}</div>
-                        <div class="text-xs text-slate-500">Date: {{ purchase.purchase_date }}</div>
+                        <div class="text-xs text-slate-500">Date: {{ formatDate(purchase.purchase_date) }}</div>
                     </div>
                 </div>
 
@@ -217,7 +218,7 @@ const printInvoice = () => {
                     <p class="text-[10px] text-slate-600 uppercase">Central Warehouse Stock-In</p>
                     <p class="text-[10px] text-slate-500">Phone: 01711-000001</p>
                     <div class="mt-2 text-xs font-bold">{{ purchase.purchase_no }}</div>
-                    <div class="text-[10px] text-slate-600">Date: {{ purchase.purchase_date }}</div>
+                    <div class="text-[10px] text-slate-600">Date: {{ formatDate(purchase.purchase_date) }}</div>
                 </div>
 
                 <div class="py-2.5 border-b border-dashed border-slate-400 text-[11px]">

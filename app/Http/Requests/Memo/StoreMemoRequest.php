@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Memo;
 
 use App\Enums\PaymentMethod;
+use App\Enums\ReturnConditionStatus;
 use App\Enums\ReturnType;
+use App\Enums\ReturnUnit;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -43,7 +45,10 @@ class StoreMemoRequest extends FormRequest
             'returns.*.product_id' => ['required', 'exists:products,id'],
             'returns.*.return_type' => ['required', Rule::enum(ReturnType::class)],
             'returns.*.damage_type' => ['nullable', 'string'],
-            'returns.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'returns.*.return_unit' => ['nullable', Rule::enum(ReturnUnit::class)],
+            'returns.*.sub_unit_quantity' => ['nullable', 'numeric', 'min:0.001'],
+            'returns.*.condition_status' => ['nullable', Rule::enum(ReturnConditionStatus::class)],
+            'returns.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'returns.*.unit_deduction_rate' => ['required', 'numeric', 'min:0'],
             'returns.*.notes' => ['nullable', 'string', 'max:255'],
         ];

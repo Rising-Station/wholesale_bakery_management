@@ -11,6 +11,7 @@ import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     purchases: {
@@ -232,7 +233,13 @@ const submitPurchase = () => {
                     </template>
                 </Column>
 
-                <Column field="purchase_date" header="Date" style="width: 120px" />
+                <Column field="purchase_date" header="Date" style="width: 125px">
+                    <template #body="{ data }">
+                        <span class="text-xs text-slate-700 font-medium">
+                            {{ formatDate(data.purchase_date) }}
+                        </span>
+                    </template>
+                </Column>
 
                 <Column field="supplier.name" header="Supplier / Manufacturer">
                     <template #body="{ data }">

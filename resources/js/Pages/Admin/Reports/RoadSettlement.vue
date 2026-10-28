@@ -10,6 +10,7 @@ import Tab from 'primevue/tab';
 import TabPanels from 'primevue/tabpanels';
 import TabPanel from 'primevue/tabpanel';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     date_from: {
@@ -397,7 +398,7 @@ const printReport = () => {
                                             <td class="p-3 font-mono font-bold text-slate-800">
                                                 {{ trip.trip_no }}
                                             </td>
-                                            <td class="p-3 text-slate-600">{{ trip.trip_date }}</td>
+                                            <td class="p-3 text-slate-600">{{ formatDate(trip.trip_date) }}</td>
                                             <td class="p-3">
                                                 <div class="font-medium text-slate-800">{{ trip.driver_name }}</div>
                                                 <div class="text-xs text-slate-500 font-mono">{{ trip.vehicle_number }}</div>

@@ -3,6 +3,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     trip: {
@@ -73,7 +74,7 @@ const dispatchVehicle = () => {
 
                     <div>
                         <span class="text-slate-400 font-semibold block uppercase text-[10px]">Dispatch Date</span>
-                        <span class="font-bold text-slate-800">{{ trip.trip_date }}</span>
+                        <span class="font-bold text-slate-800">{{ formatDate(trip.trip_date) }}</span>
                     </div>
 
                     <div>

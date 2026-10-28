@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
+import { formatDate } from '@/Utils/date';
 import Tag from 'primevue/tag';
 
 const props = defineProps({
@@ -102,7 +103,7 @@ const printInvoice = () => {
                             Delivery Sales Memo
                         </div>
                         <div class="font-mono text-base font-bold text-slate-900">{{ memo.memo_no }}</div>
-                        <div class="text-xs text-slate-500">Date: {{ memo.memo_date }}</div>
+                        <div class="text-xs text-slate-500">Date: {{ formatDate(memo.memo_date) }}</div>
                     </div>
                 </div>
 
@@ -175,21 +176,41 @@ const printInvoice = () => {
                             <tr class="bg-rose-50 border-b border-rose-200 text-rose-800 font-bold uppercase text-[10px]">
                                 <th class="p-2 border-r border-rose-200">Returned Product</th>
                                 <th class="p-2 border-r border-rose-200 w-44">Return Nature</th>
-                                <th class="p-2 border-r border-rose-200 w-20 text-right">Qty</th>
+                                <th class="p-2 border-r border-rose-200 w-28 text-right">Qty / Weight</th>
                                 <th class="p-2 border-r border-rose-200 w-24 text-right">Deduct Rate</th>
                                 <th class="p-2 w-28 text-right text-rose-700">Deduction (৳)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="ret in memo.returns" :key="ret.id" class="border-b border-rose-100 text-slate-800">
-                                <td class="p-2 border-r border-rose-100 font-semibold">{{ ret.product?.name }}</td>
-                                <td class="p-2 border-r border-rose-100 text-[11px]">
-                                    <span :class="ret.return_type === 'DAMAGE' ? 'text-rose-600 font-bold' : 'text-blue-600 font-bold'">
-                                        {{ ret.return_type === 'DAMAGE' ? 'Damage / Expiry Return' : 'Product Exchange (Good)' }}
+                                <td class="p-2 border-r border-rose-100 font-semibold">
+                                    {{ ret.product?.name }}
+                                    <span v-if="ret.destination_location === 'REPACK_HOLDING'" class="block text-[10px] text-indigo-600 font-normal">
+                                        [Repack Bay Holding - Broken Pack / Loose]
                                     </span>
                                 </td>
-                                <td class="p-2 border-r border-rose-100 text-right font-mono font-bold">{{ Number(ret.quantity).toFixed(0) }}</td>
-                                <td class="p-2 border-r border-rose-100 text-right font-mono">{{ Number(ret.unit_deduction_rate).toFixed(2) }}</td>
+                                <td class="p-2 border-r border-rose-100 text-[11px]">
+                                    <span :class="ret.return_type === 'DAMAGE' ? 'text-rose-600 font-bold' : 'text-blue-600 font-bold'">
+                                        {{ ret.return_type === 'DAMAGE' ? 'Damage / Expiry Return' : 'Product Exchange' }}
+                                    </span>
+                                </td>
+                                <td class="p-2 border-r border-rose-100 text-right font-mono font-bold">
+                                    <template v-if="ret.return_unit === 'PCS' && ret.sub_unit_quantity">
+                                        {{ Number(ret.sub_unit_quantity).toFixed(0) }} pcs
+                                        <span class="block text-[10px] text-slate-400 font-normal">({{ Number(ret.quantity).toFixed(2) }} ctn eq)</span>
+                                    </template>
+                                    <template v-else-if="ret.return_unit === 'KG' && ret.sub_unit_quantity">
+                                        {{ Number(ret.sub_unit_quantity).toFixed(2) }} kg
+                                        <span class="block text-[10px] text-slate-400 font-normal">({{ Number(ret.quantity).toFixed(2) }} pkt eq)</span>
+                                    </template>
+                                    <template v-else>
+                                        {{ Number(ret.quantity).toFixed(0) }} {{ ret.product?.packaging_type === 'CARTOON' ? 'ctn' : 'pkt' }}
+                                    </template>
+                                </td>
+                                <td class="p-2 border-r border-rose-100 text-right font-mono">
+                                    {{ Number(ret.unit_deduction_rate).toFixed(2) }}
+                                    <span class="text-[10px] text-slate-400 block font-normal">/ {{ ret.return_unit === 'PCS' ? 'pc' : (ret.return_unit === 'KG' ? 'kg' : (ret.product?.packaging_type === 'CARTOON' ? 'ctn' : 'pkt')) }}</span>
+                                </td>
                                 <td class="p-2 text-right font-mono font-bold text-rose-600">- ৳{{ Number(ret.total_deduction_amount).toFixed(2) }}</td>
                             </tr>
                         </tbody>
@@ -266,7 +287,7 @@ const printInvoice = () => {
                     <p class="text-[10px] text-slate-600 uppercase">Wholesale Distribution</p>
                     <p class="text-[10px] text-slate-500">Phone: 01711-000001</p>
                     <div class="mt-2 text-xs font-bold">{{ memo.memo_no }}</div>
-                    <div class="text-[10px] text-slate-600">Date: {{ memo.memo_date }}</div>
+                    <div class="text-[10px] text-slate-600">Date: {{ formatDate(memo.memo_date) }}</div>
                 </div>
 
                 <div class="py-2.5 border-b border-dashed border-slate-400 text-[11px]">
@@ -295,7 +316,7 @@ const printInvoice = () => {
                 </div>
 
                 <!-- Deductions -->
-                <div v-if="Number(memo.damage_deduction) > 0 || Number(memo.exchange_deduction) > 0" class="py-2 border-b border-dashed border-slate-400 text-[10px] text-rose-600">
+                <div v-if="Number(memo.damage_deduction) > 0 || Number(memo.exchange_deduction) > 0" class="py-2 border-b border-dashed border-slate-400 text-[10px] text-rose-600 space-y-1">
                     <div v-if="Number(memo.damage_deduction) > 0" class="flex justify-between">
                         <span>- Damage Return:</span>
                         <span>-৳{{ Number(memo.damage_deduction).toFixed(0) }}</span>
@@ -303,6 +324,21 @@ const printInvoice = () => {
                     <div v-if="Number(memo.exchange_deduction) > 0" class="flex justify-between text-blue-600">
                         <span>- Exchange Deduct:</span>
                         <span>-৳{{ Number(memo.exchange_deduction).toFixed(0) }}</span>
+                    </div>
+                    <div v-for="ret in memo.returns" :key="'th-'+ret.id" class="text-[9px] text-slate-500 flex justify-between pl-2">
+                        <span>
+                            {{ ret.product?.code }}: 
+                            <template v-if="ret.return_unit === 'PCS' && ret.sub_unit_quantity">
+                                {{ Number(ret.sub_unit_quantity).toFixed(0) }}pcs ({{ ret.destination_location === 'REPACK_HOLDING' ? 'Repack' : 'Scrap' }})
+                            </template>
+                            <template v-else-if="ret.return_unit === 'KG' && ret.sub_unit_quantity">
+                                {{ Number(ret.sub_unit_quantity).toFixed(1) }}kg ({{ ret.destination_location === 'REPACK_HOLDING' ? 'Repack' : 'Scrap' }})
+                            </template>
+                            <template v-else>
+                                {{ Number(ret.quantity).toFixed(0) }}pk
+                            </template>
+                        </span>
+                        <span>-৳{{ Number(ret.total_deduction_amount).toFixed(0) }}</span>
                     </div>
                 </div>
 

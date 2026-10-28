@@ -7,6 +7,7 @@ import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
+import { formatDate, formatDateTime } from '@/Utils/date';
 
 const props = defineProps({
     trip: {
@@ -159,7 +160,7 @@ const printSheet = () => {
                 <p class="text-xs text-slate-600">Daily Vehicle Trip Reconciliation & Settlement Statement</p>
                 <div class="flex justify-between text-xs mt-2 border-t pt-2 font-mono">
                     <span>Trip: {{ trip.trip_no }}</span>
-                    <span>Date: {{ trip.trip_date }}</span>
+                    <span>Date: {{ formatDate(trip.trip_date) }}</span>
                     <span>Road: {{ trip.road?.name }}</span>
                     <span>Vehicle: {{ trip.vehicle_number }}</span>
                     <span>Driver: {{ trip.driver_name }}</span>
@@ -171,7 +172,7 @@ const printSheet = () => {
                 <div class="flex items-center gap-2 text-sm font-medium">
                     <i class="pi pi-check-circle text-emerald-600"></i>
                     <span>
-                        This trip was finalized and settled on <strong>{{ trip.completed_at }}</strong>. Unsold items have been deposited back into Central Warehouse inventory.
+                        This trip was finalized and settled on <strong>{{ formatDateTime(trip.completed_at) }}</strong>. Unsold items have been deposited back into Central Warehouse inventory.
                     </span>
                 </div>
             </Message>
@@ -197,9 +198,9 @@ const printSheet = () => {
 
                 <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
                     <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Trip Date & Dispatch</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">{{ trip.trip_date }}</div>
+                    <div class="text-base font-bold text-slate-900 mt-1">{{ formatDate(trip.trip_date) }}</div>
                     <div class="text-xs text-slate-500 mt-0.5">
-                        Dispatched: {{ trip.dispatched_at || 'In Depot' }}
+                        Dispatched: {{ formatDateTime(trip.dispatched_at) || 'In Depot' }}
                     </div>
                 </div>
 

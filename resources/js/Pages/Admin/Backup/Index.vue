@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
+import { formatDateTime } from '@/Utils/date';
 
 const props = defineProps({
     backups: {
@@ -84,7 +85,7 @@ const deleteBackup = (id) => {
                                 </td>
 
                                 <td class="p-3.5 text-xs text-slate-600">
-                                    {{ backup.created_at }}
+                                    {{ formatDateTime(backup.created_at) }}
                                 </td>
 
                                 <td class="p-3.5 text-xs font-mono font-bold text-slate-800">

@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\DamageScrapCategory;
 use App\Enums\DamageType;
+use App\Enums\ReturnUnit;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +16,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'retailer_id',
     'road_id',
     'damage_type',
+    'category',
     'quantity',
+    'weight_kg',
+    'pieces_count',
+    'return_unit',
     'status',
     'disposal_date',
     'disposal_notes',
@@ -35,7 +41,11 @@ class DamageScrapInventory extends Model
     {
         return [
             'damage_type' => DamageType::class,
+            'category' => DamageScrapCategory::class,
+            'return_unit' => ReturnUnit::class,
             'quantity' => 'decimal:2',
+            'weight_kg' => 'decimal:3',
+            'pieces_count' => 'integer',
             'disposal_date' => 'date',
         ];
     }

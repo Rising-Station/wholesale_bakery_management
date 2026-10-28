@@ -8,6 +8,7 @@ import Button from 'primevue/button';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import InputText from 'primevue/inputtext';
+import { formatDateTime } from '@/Utils/date';
 
 const props = defineProps({
     movements: {
@@ -69,17 +70,7 @@ const getMovementSeverity = (type) => {
     return map[type] || 'secondary';
 };
 
-const formatDate = (isoString) => {
-    if (!isoString) return '-';
-    const d = new Date(isoString);
-    return d.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-};
+const formatDate = (isoString) => formatDateTime(isoString);
 </script>
 
 <template>

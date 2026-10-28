@@ -11,6 +11,7 @@ import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     returns: {
@@ -39,6 +40,9 @@ const props = defineProps({
             total_damage_deductions: 0,
             total_exchange_deductions: 0,
             quarantine_scrap_quantity: 0,
+            repack_holding_quantity: 0,
+            repack_holding_weight: 0,
+            repack_holding_pieces: 0,
         }),
     },
     filters: {
@@ -134,10 +138,10 @@ const submitClaim = () => {
             </div>
 
             <!-- KPI Metric Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-rose-500">Scenario 1: Damage Return Credits</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-rose-500">Scenario 1: Damage Credits</span>
                         <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                             <i class="pi pi-times-circle text-lg"></i>
                         </div>
@@ -150,7 +154,7 @@ const submitClaim = () => {
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Scenario 2: Product Exchange Credits</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Scenario 2: Exchange Credits</span>
                         <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                             <i class="pi pi-sync text-lg"></i>
                         </div>
@@ -158,12 +162,12 @@ const submitClaim = () => {
                     <div class="text-2xl font-black text-blue-600 mt-2">
                         ৳ {{ Number(metrics.total_exchange_deductions).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
                     </div>
-                    <div class="text-xs text-slate-400 mt-1">Offset on memos & restored to sellable stock</div>
+                    <div class="text-xs text-slate-400 mt-1">Offset on memos against new items</div>
                 </div>
 
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Quarantine Scrap In Depot</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Quarantine Scrap</span>
                         <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                             <i class="pi pi-trash text-lg"></i>
                         </div>
@@ -172,6 +176,24 @@ const submitClaim = () => {
                         {{ Number(metrics.quarantine_scrap_quantity).toLocaleString() }} units
                     </div>
                     <div class="text-xs text-slate-400 mt-1">Awaiting factory claim or write-off</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Repack Bay Holding</span>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                            <i class="pi pi-box text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-black text-indigo-700 mt-2">
+                        {{ Number(metrics.repack_holding_quantity || 0).toFixed(2) }} <span class="text-sm font-semibold text-slate-500">units</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">
+                        <span v-if="Number(metrics.repack_holding_pieces || 0) > 0">{{ Number(metrics.repack_holding_pieces).toLocaleString() }} loose pcs</span>
+                        <span v-if="Number(metrics.repack_holding_pieces || 0) > 0 && Number(metrics.repack_holding_weight || 0) > 0"> &bull; </span>
+                        <span v-if="Number(metrics.repack_holding_weight || 0) > 0">{{ Number(metrics.repack_holding_weight || 0).toFixed(2) }} kg loose</span>
+                        <span v-if="!Number(metrics.repack_holding_pieces || 0) && !Number(metrics.repack_holding_weight || 0)">Loose packages held</span>
+                    </div>
                 </div>
             </div>
 
@@ -236,7 +258,15 @@ const submitClaim = () => {
                 :currentPage="returns.current_page || 1"
                 tableTitle="Recorded Returns & Exchanges Audit Log"
             >
-                <Column field="sales_memo.memo_no" header="Memo #" style="width: 150px">
+                <Column field="created_at" header="Date" style="width: 120px">
+                    <template #body="{ data }">
+                        <span class="text-xs text-slate-700 font-medium">
+                            {{ formatDate(data.created_at) }}
+                        </span>
+                    </template>
+                </Column>
+
+                <Column field="sales_memo.memo_no" header="Memo #" style="width: 140px">
                     <template #body="{ data }">
                         <span class="font-mono text-xs font-semibold text-slate-800 bg-slate-100 px-2 py-1 rounded">
                             {{ data.sales_memo?.memo_no || 'Direct Return' }}
@@ -258,25 +288,51 @@ const submitClaim = () => {
                     </template>
                 </Column>
 
-                <Column field="return_type" header="Return Nature" style="width: 170px">
+                <Column field="return_type" header="Return Nature" style="width: 190px">
                     <template #body="{ data }">
                         <Tag
-                            :value="data.return_type === 'DAMAGE' ? 'Damage / Expiry' : 'Product Exchange'"
-                            :severity="data.return_type === 'DAMAGE' ? 'danger' : 'info'"
+                            :value="data.return_type === 'DAMAGE' ? 'Damage / Expiry' : (data.damage_type === 'BROKEN_PACKET' ? 'Broken Pack Exchange' : 'Product Exchange')"
+                            :severity="data.return_type === 'DAMAGE' ? 'danger' : (data.damage_type === 'BROKEN_PACKET' ? 'warn' : 'info')"
                             rounded
                             class="text-[10px]"
                         />
-                        <div class="text-[10px] text-slate-400 mt-0.5">
-                            {{ data.affects_sellable_stock ? 'Stock Increased' : 'Quarantine Scrap' }}
+                        <div class="text-[10px] mt-0.5">
+                            <span v-if="data.destination_location === 'REPACK_HOLDING'" class="text-indigo-600 font-semibold">
+                                Repack Bay Holding
+                            </span>
+                            <span v-else-if="data.affects_sellable_stock" class="text-emerald-600 font-semibold">
+                                Stock Increased
+                            </span>
+                            <span v-else class="text-rose-500 font-semibold">
+                                Quarantine Scrap
+                            </span>
                         </div>
                     </template>
                 </Column>
 
-                <Column field="quantity" header="Qty" style="width: 90px">
+                <Column field="quantity" header="Qty / Units" style="width: 130px">
                     <template #body="{ data }">
-                        <span class="font-mono font-bold text-sm text-slate-900">
-                            {{ Number(data.quantity).toFixed(0) }}
-                        </span>
+                        <template v-if="data.return_unit === 'PCS' && data.sub_unit_quantity">
+                            <span class="font-mono font-bold text-sm text-slate-900">
+                                {{ Number(data.sub_unit_quantity).toFixed(0) }} pcs
+                            </span>
+                            <span class="block text-[10px] text-slate-400 font-normal">
+                                ≈ {{ Number(data.quantity).toFixed(2) }} ctn eq
+                            </span>
+                        </template>
+                        <template v-else-if="data.return_unit === 'KG' && data.sub_unit_quantity">
+                            <span class="font-mono font-bold text-sm text-slate-900">
+                                {{ Number(data.sub_unit_quantity).toFixed(2) }} kg
+                            </span>
+                            <span class="block text-[10px] text-slate-400 font-normal">
+                                ≈ {{ Number(data.quantity).toFixed(2) }} pkt eq
+                            </span>
+                        </template>
+                        <template v-else>
+                            <span class="font-mono font-bold text-sm text-slate-900">
+                                {{ Number(data.quantity).toFixed(0) }} {{ data.product?.packaging_type === 'CARTOON' ? 'ctn' : 'pkt' }}
+                            </span>
+                        </template>
                     </template>
                 </Column>
 
@@ -284,6 +340,9 @@ const submitClaim = () => {
                     <template #body="{ data }">
                         <span class="font-mono text-xs text-slate-600">
                             ৳ {{ Number(data.unit_deduction_rate).toFixed(2) }}
+                        </span>
+                        <span class="text-[10px] text-slate-400 block font-normal">
+                            / {{ data.return_unit === 'PCS' ? 'pc' : (data.return_unit === 'KG' ? 'kg' : (data.product?.packaging_type === 'CARTOON' ? 'ctn' : 'pkt')) }}
                         </span>
                     </template>
                 </Column>

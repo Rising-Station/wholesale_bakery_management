@@ -10,6 +10,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     adjustments: {
@@ -134,7 +135,7 @@ const submitAudit = () => {
                 <Column field="adjustment_date" header="Audit Date" style="width: 130px">
                     <template #body="{ data }">
                         <span class="text-xs text-slate-700 font-medium">
-                            {{ data.adjustment_date }}
+                            {{ formatDate(data.adjustment_date) }}
                         </span>
                     </template>
                 </Column>

@@ -11,6 +11,7 @@ import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     expenses: {
@@ -181,7 +182,13 @@ const deleteExpense = (id) => {
                 :currentPage="expenses.current_page || 1"
                 tableTitle="Expense Ledger"
             >
-                <Column field="expense_date" header="Date" style="width: 120px" />
+                <Column field="expense_date" header="Date" style="width: 125px">
+                    <template #body="{ data }">
+                        <span class="text-xs text-slate-700 font-medium">
+                            {{ formatDate(data.expense_date) }}
+                        </span>
+                    </template>
+                </Column>
 
                 <Column field="category" header="Category" style="width: 220px">
                     <template #body="{ data }">

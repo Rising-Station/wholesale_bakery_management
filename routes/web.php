@@ -133,68 +133,127 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
     })->name('dashboard');
 
     // User & Role Management
-    Route::resource('roles', RoleController::class)->except(['create', 'show', 'edit']);
-    Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
-    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::middleware('can:roles.view')->get('roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::middleware('can:roles.manage')->group(function (): void {
+        Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    });
+
+    Route::middleware('can:users.view')->get('users', [UserController::class, 'index'])->name('users.index');
+    Route::middleware('can:users.create')->post('users', [UserController::class, 'store'])->name('users.store');
+    Route::middleware('can:users.edit')->group(function (): void {
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    });
+    Route::middleware('can:users.delete')->delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Phase 3: Roads & Retailers (Tier 3)
-    Route::resource('roads', RoadController::class)->except(['create', 'show', 'edit']);
-    Route::resource('retailers', RetailerController::class)->except(['create', 'edit']);
+    Route::middleware('can:roads.view')->get('roads', [RoadController::class, 'index'])->name('roads.index');
+    Route::middleware('can:roads.create')->post('roads', [RoadController::class, 'store'])->name('roads.store');
+    Route::middleware('can:roads.edit')->put('roads/{road}', [RoadController::class, 'update'])->name('roads.update');
+    Route::middleware('can:roads.delete')->delete('roads/{road}', [RoadController::class, 'destroy'])->name('roads.destroy');
+
+    Route::middleware('can:retailers.view')->group(function (): void {
+        Route::get('retailers', [RetailerController::class, 'index'])->name('retailers.index');
+        Route::get('retailers/{retailer}', [RetailerController::class, 'show'])->name('retailers.show');
+    });
+    Route::middleware('can:retailers.create')->post('retailers', [RetailerController::class, 'store'])->name('retailers.store');
+    Route::middleware('can:retailers.edit')->put('retailers/{retailer}', [RetailerController::class, 'update'])->name('retailers.update');
+    Route::middleware('can:retailers.delete')->delete('retailers/{retailer}', [RetailerController::class, 'destroy'])->name('retailers.destroy');
 
     // Phase 4: Product Packaging, Catalog & Central Warehouse Stock (Tier 2)
-    Route::post('products/categories', [ProductController::class, 'storeCategory'])->name('products.categories.store');
-    Route::put('products/categories/{category}', [ProductController::class, 'updateCategory'])->name('products.categories.update');
-    Route::delete('products/categories/{category}', [ProductController::class, 'destroyCategory'])->name('products.categories.destroy');
+    Route::middleware('can:products.view')->get('products', [ProductController::class, 'index'])->name('products.index');
+    Route::middleware('can:products.create')->group(function (): void {
+        Route::post('products', [ProductController::class, 'store'])->name('products.store');
+        Route::post('products/categories', [ProductController::class, 'storeCategory'])->name('products.categories.store');
+        Route::post('products/packaging-types', [PackagingTypeController::class, 'store'])->name('products.packaging-types.store');
+        Route::post('products/units', [UnitController::class, 'store'])->name('products.units.store');
+    });
+    Route::middleware('can:products.edit')->group(function (): void {
+        Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::put('products/categories/{category}', [ProductController::class, 'updateCategory'])->name('products.categories.update');
+        Route::put('products/packaging-types/{packagingType}', [PackagingTypeController::class, 'update'])->name('products.packaging-types.update');
+        Route::put('products/units/{unit}', [UnitController::class, 'update'])->name('products.units.update');
+    });
+    Route::middleware('can:products.delete')->group(function (): void {
+        Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+        Route::delete('products/categories/{category}', [ProductController::class, 'destroyCategory'])->name('products.categories.destroy');
+        Route::delete('products/packaging-types/{packagingType}', [PackagingTypeController::class, 'destroy'])->name('products.packaging-types.destroy');
+        Route::delete('products/units/{unit}', [UnitController::class, 'destroy'])->name('products.units.destroy');
+    });
 
-    Route::post('products/packaging-types', [PackagingTypeController::class, 'store'])->name('products.packaging-types.store');
-    Route::put('products/packaging-types/{packagingType}', [PackagingTypeController::class, 'update'])->name('products.packaging-types.update');
-    Route::delete('products/packaging-types/{packagingType}', [PackagingTypeController::class, 'destroy'])->name('products.packaging-types.destroy');
-
-    Route::post('products/units', [UnitController::class, 'store'])->name('products.units.store');
-    Route::put('products/units/{unit}', [UnitController::class, 'update'])->name('products.units.update');
-    Route::delete('products/units/{unit}', [UnitController::class, 'destroy'])->name('products.units.destroy');
-
-    Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
-
-    Route::get('stock', [StockController::class, 'index'])->name('stock.index');
-    Route::get('stock/movements', [StockController::class, 'movements'])->name('stock.movements');
-
-    Route::get('stock-adjustments', [StockAdjustmentController::class, 'index'])->name('stock-adjustments.index');
-    Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->name('stock-adjustments.store');
+    Route::middleware('can:stock.view')->group(function (): void {
+        Route::get('stock', [StockController::class, 'index'])->name('stock.index');
+        Route::get('stock/movements', [StockController::class, 'movements'])->name('stock.movements');
+    });
+    Route::middleware('can:stock.adjust')->group(function (): void {
+        Route::get('stock-adjustments', [StockAdjustmentController::class, 'index'])->name('stock-adjustments.index');
+        Route::post('stock-adjustments', [StockAdjustmentController::class, 'store'])->name('stock-adjustments.store');
+    });
 
     // Phase 5: Supplier Procurement & Purchase Stock-In Engine (Tier 1 Inflow)
-    Route::post('suppliers/payments', [SupplierController::class, 'recordPayment'])->name('suppliers.payments.store');
-    Route::resource('suppliers', SupplierController::class)->except(['create', 'edit']);
-    Route::get('purchases/create', fn () => redirect()->route('purchases.index', array_merge(['action' => 'create'], request()->query())))->name('purchases.create');
-    Route::resource('purchases', PurchaseController::class)->only(['index', 'store', 'show']);
+    Route::middleware('can:suppliers.view')->group(function (): void {
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+    });
+    Route::middleware('can:suppliers.create')->post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::middleware('can:suppliers.edit')->put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+    Route::middleware('can:suppliers.delete')->delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+    Route::middleware('can:suppliers.payment')->post('suppliers/payments', [SupplierController::class, 'recordPayment'])->name('suppliers.payments.store');
+
+    Route::middleware('can:purchases.view')->group(function (): void {
+        Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('purchases/create', fn () => redirect()->route('purchases.index', array_merge(['action' => 'create'], request()->query())))->name('purchases.create');
+        Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
+    });
+    Route::middleware('can:purchases.create')->post('purchases', [PurchaseController::class, 'store'])->name('purchases.store');
 
     // Phase 6: Vehicle Mobile Stock Loading & Trip Management (Mominul Bekari -> Road)
-    Route::patch('trips/{trip}/dispatch', [VehicleTripController::class, 'dispatch'])->name('trips.dispatch');
-    Route::get('trips/create', fn () => redirect()->route('trips.index', array_merge(['action' => 'create'], request()->query())))->name('trips.create');
-    Route::resource('trips', VehicleTripController::class)->only(['index', 'store', 'show']);
+    Route::middleware('can:trips.view')->group(function (): void {
+        Route::get('trips', [VehicleTripController::class, 'index'])->name('trips.index');
+        Route::get('trips/create', fn () => redirect()->route('trips.index', array_merge(['action' => 'create'], request()->query())))->name('trips.create');
+        Route::get('trips/{trip}', [VehicleTripController::class, 'show'])->name('trips.show');
+    });
+    Route::middleware('can:trips.create')->post('trips', [VehicleTripController::class, 'store'])->name('trips.store');
+    Route::middleware('can:trips.dispatch')->patch('trips/{trip}/dispatch', [VehicleTripController::class, 'dispatch'])->name('trips.dispatch');
+    Route::middleware('can:trips.reconcile')->group(function (): void {
+        Route::get('trips/{trip}/reconcile', [TripReconciliationController::class, 'show'])->name('trips.reconcile');
+        Route::post('trips/{trip}/reconcile', [TripReconciliationController::class, 'store'])->name('trips.reconcile.store');
+    });
 
     // Phase 7: Sales Memo, Billing & Credit (Due) Engine (Road -> Retailer Delivery)
-    Route::post('memos/collect-due', [MemoController::class, 'collectDue'])->name('memos.collect-due');
-    Route::get('memos/create', fn () => redirect()->route('memos.index', array_merge(['action' => 'create'], request()->query())))->name('memos.create');
-    Route::resource('memos', MemoController::class)->only(['index', 'store', 'show']);
+    Route::middleware('can:memos.view')->group(function (): void {
+        Route::get('memos', [MemoController::class, 'index'])->name('memos.index');
+        Route::get('memos/create', fn () => redirect()->route('memos.index', array_merge(['action' => 'create'], request()->query())))->name('memos.create');
+        Route::get('memos/{memo}', [MemoController::class, 'show'])->name('memos.show');
+    });
+    Route::middleware('can:memos.create')->post('memos', [MemoController::class, 'store'])->name('memos.store');
+    Route::middleware('can:retailers.payment')->post('memos/collect-due', [MemoController::class, 'collectDue'])->name('memos.collect-due');
 
     // Phase 8: Returns & Exchanges (Damage Returns & Product Exchanges)
-    Route::get('damage-returns', [DamageReturnController::class, 'index'])->name('damage-returns.index');
-    Route::post('damage-returns/claims', [DamageReturnController::class, 'storeClaim'])->name('damage-returns.claims.store');
+    Route::middleware('can:damage.view')->get('damage-returns', [DamageReturnController::class, 'index'])->name('damage-returns.index');
+    Route::middleware('can:damage.create')->post('damage-returns/claims', [DamageReturnController::class, 'storeClaim'])->name('damage-returns.claims.store');
 
     // Phase 9: Road-Wise Sales, Collections & Stock Reconciliation
-    Route::get('trips/{trip}/reconcile', [TripReconciliationController::class, 'show'])->name('trips.reconcile');
-    Route::post('trips/{trip}/reconcile', [TripReconciliationController::class, 'store'])->name('trips.reconcile.store');
-    Route::get('reports/road-settlement', [RoadReportController::class, 'index'])->name('reports.road-settlement');
+    Route::middleware('can:reports.view')->get('reports/road-settlement', [RoadReportController::class, 'index'])->name('reports.road-settlement');
 
     // Phase 10: Operational Expenses, Settings, DB Backup & Polish
-    Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'destroy']);
-    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
-    Route::get('backup', [BackupController::class, 'index'])->name('backup.index');
-    Route::post('backup', [BackupController::class, 'store'])->name('backup.store');
-    Route::get('backup/{backup}/download', [BackupController::class, 'download'])->name('backup.download');
-    Route::delete('backup/{backup}', [BackupController::class, 'destroy'])->name('backup.destroy');
+    Route::middleware('can:expenses.view')->get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::middleware('can:expenses.create')->post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::middleware('can:expenses.delete')->delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+    Route::middleware('can:settings.manage')->group(function (): void {
+        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    });
+
+    Route::middleware('can:backup.manage')->group(function (): void {
+        Route::get('backup', [BackupController::class, 'index'])->name('backup.index');
+        Route::post('backup', [BackupController::class, 'store'])->name('backup.store');
+        Route::get('backup/{backup}/download', [BackupController::class, 'download'])->name('backup.download');
+        Route::delete('backup/{backup}', [BackupController::class, 'destroy'])->name('backup.destroy');
+    });
 
     // Profile Management
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');

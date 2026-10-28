@@ -101,4 +101,65 @@ class UserAndRoleManagementTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
+
+    public function test_unauthorized_user_is_forbidden_from_viewing_roles(): void
+    {
+        $driver = User::factory()->create(['is_active' => true]);
+        $driver->assignRole('SalesDriver');
+
+        $response = $this->actingAs($driver)->get(route('roles.index'));
+        $response->assertForbidden();
+    }
+
+    public function test_unauthorized_user_is_forbidden_from_managing_roles(): void
+    {
+        $driver = User::factory()->create(['is_active' => true]);
+        $driver->assignRole('SalesDriver');
+
+        $response = $this->actingAs($driver)->post(route('roles.store'), [
+            'name' => 'HackerRole',
+            'permissions' => ['stock.view'],
+        ]);
+        $response->assertForbidden();
+    }
+
+    public function test_unauthorized_user_is_forbidden_from_managing_users(): void
+    {
+        $driver = User::factory()->create(['is_active' => true]);
+        $driver->assignRole('SalesDriver');
+
+        $response = $this->actingAs($driver)->get(route('users.index'));
+        $response->assertForbidden();
+
+        $response = $this->actingAs($driver)->post(route('users.store'), [
+            'name' => 'Fake User',
+            'email' => 'fake@mominulbekari.com',
+            'password' => 'secret1234',
+            'role' => 'SuperAdmin',
+        ]);
+        $response->assertForbidden();
+    }
+
+    public function test_branch_manager_can_view_users_but_cannot_access_roles(): void
+    {
+        $manager = User::factory()->create(['is_active' => true]);
+        $manager->assignRole('BranchManager');
+
+        // BranchManager has users.view permission
+        $response = $this->actingAs($manager)->get(route('users.index'));
+        $response->assertOk();
+
+        // BranchManager does not have roles.view permission
+        $response = $this->actingAs($manager)->get(route('roles.index'));
+        $response->assertForbidden();
+
+        // BranchManager does not have users.create permission
+        $response = $this->actingAs($manager)->post(route('users.store'), [
+            'name' => 'New User by Manager',
+            'email' => 'newby@mominulbekari.com',
+            'password' => 'secret1234',
+            'role' => 'SalesDriver',
+        ]);
+        $response->assertForbidden();
+    }
 }

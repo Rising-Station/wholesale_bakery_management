@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\DamageType;
+use App\Enums\ReturnConditionStatus;
+use App\Enums\ReturnDestinationLocation;
 use App\Enums\ReturnType;
+use App\Enums\ReturnUnit;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,6 +20,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'vehicle_trip_id',
     'return_type',
     'damage_type',
+    'return_unit',
+    'sub_unit_quantity',
+    'conversion_factor',
+    'condition_status',
+    'destination_location',
     'quantity',
     'unit_deduction_rate',
     'total_deduction_amount',
@@ -40,7 +48,12 @@ class DamageReturn extends Model
         return [
             'return_type' => ReturnType::class,
             'damage_type' => DamageType::class,
+            'return_unit' => ReturnUnit::class,
+            'condition_status' => ReturnConditionStatus::class,
+            'destination_location' => ReturnDestinationLocation::class,
             'quantity' => 'decimal:2',
+            'sub_unit_quantity' => 'decimal:3',
+            'conversion_factor' => 'decimal:3',
             'unit_deduction_rate' => 'decimal:2',
             'total_deduction_amount' => 'decimal:2',
             'affects_sellable_stock' => 'boolean',

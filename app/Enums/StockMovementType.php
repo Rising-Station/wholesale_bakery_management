@@ -11,6 +11,7 @@ enum StockMovementType: string
     case DirectSale = 'DIRECT_SALE';
     case DamageReturn = 'DAMAGE_RETURN';
     case ExchangeReturn = 'EXCHANGE_RETURN';
+    case PartialExchange = 'PARTIAL_EXCHANGE';
     case ScrapDisposal = 'SCRAP_DISPOSAL';
     case AuditAdjustment = 'AUDIT_ADJUSTMENT';
 
@@ -27,6 +28,7 @@ enum StockMovementType: string
             self::DirectSale => 'Direct Warehouse Sale',
             self::DamageReturn => 'Damaged/Expired Return from Retailer (Quarantine)',
             self::ExchangeReturn => 'Product Exchange Return (Sellable Stock In)',
+            self::PartialExchange => 'Loose / Broken Pack Exchange (Repackaging Holding)',
             self::ScrapDisposal => 'Scrap / Disposal Write-off',
             self::AuditAdjustment => 'Physical Audit Adjustment',
         };

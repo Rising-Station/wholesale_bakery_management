@@ -23,21 +23,36 @@ const userMenu = ref();
 
 const authUser = computed(() => page.props.auth?.user || { name: 'Mominul Bekari Admin', email: 'admin@mominulbekari.com', roles: ['SuperAdmin'] });
 
+const hasPermission = (permission) => {
+    if (!permission) return true;
+    if (!authUser.value) return false;
+    if (authUser.value.roles?.includes('SuperAdmin')) return true;
+    return Boolean(authUser.value.permissions?.includes(permission));
+};
+
+const hasRole = (role) => {
+    return Boolean(authUser.value?.roles?.includes(role));
+};
+
 const toggleUserMenu = (event) => {
     userMenu.value.toggle(event);
 };
 
-const userMenuItems = ref([
+const userMenuItems = computed(() => [
     {
         label: 'My Profile',
         icon: 'pi pi-user',
         command: () => router.visit(route('profile.edit')),
     },
-    {
-        label: 'System Settings',
-        icon: 'pi pi-cog',
-        command: () => router.visit('/settings'),
-    },
+    ...(hasPermission('settings.manage')
+        ? [
+              {
+                  label: 'System Settings',
+                  icon: 'pi pi-cog',
+                  command: () => router.visit('/settings'),
+              },
+          ]
+        : []),
     {
         separator: true,
     },
@@ -70,40 +85,49 @@ watch(
     { deep: true, immediate: true }
 );
 
-const navSections = [
-    {
-        title: 'Core Distribution',
-        items: [
-            { label: 'Dashboard', route: '/dashboard', icon: 'pi pi-chart-bar' },
-            { label: 'Vehicle Trips', route: '/trips', icon: 'pi pi-truck', badge: 'Active' },
-            { label: 'Sales Memos', route: '/memos', icon: 'pi pi-file-edit' },
-            { label: 'Damage & Returns', route: '/damage-returns', icon: 'pi pi-exclamation-triangle' },
-        ],
-    },
-    {
-        title: 'Network & Master Data',
-        items: [
-            { label: 'Roads (A, B, C)', route: '/roads', icon: 'pi pi-map' },
-            { label: 'Retailer Shops', route: '/retailers', icon: 'pi pi-shop' },
-            { label: 'Central Warehouse Stock', route: '/stock', icon: 'pi pi-box' },
-            { label: 'Stock Adjustments', route: '/stock-adjustments', icon: 'pi pi-sliders-h' },
-            { label: 'Product Catalog', route: '/products', icon: 'pi pi-tags' },
-            { label: 'Suppliers (Tier 1)', route: '/suppliers', icon: 'pi pi-building' },
-            { label: 'Purchase Invoices', route: '/purchases', icon: 'pi pi-shopping-cart' },
-        ],
-    },
-    {
-        title: 'Finance & Governance',
-        items: [
-            { label: 'Road Reconciliation', route: '/reports/road-settlement', icon: 'pi pi-calculator' },
-            { label: 'Overhead Expenses', route: '/expenses', icon: 'pi pi-wallet' },
-            { label: 'User Management', route: '/users', icon: 'pi pi-users' },
-            { label: 'Roles & Permissions', route: '/roles', icon: 'pi pi-shield' },
-            { label: 'General Settings', route: '/settings', icon: 'pi pi-cog' },
-            { label: 'Database Backup', route: '/backup', icon: 'pi pi-database' },
-        ],
-    },
-];
+const navSections = computed(() => {
+    const rawSections = [
+        {
+            title: 'Core Distribution',
+            items: [
+                { label: 'Dashboard', route: '/dashboard', icon: 'pi pi-chart-bar' },
+                { label: 'Vehicle Trips', route: '/trips', icon: 'pi pi-truck', badge: 'Active', permission: 'trips.view' },
+                { label: 'Sales Memos', route: '/memos', icon: 'pi pi-file-edit', permission: 'memos.view' },
+                { label: 'Damage & Returns', route: '/damage-returns', icon: 'pi pi-exclamation-triangle', permission: 'damage.view' },
+            ],
+        },
+        {
+            title: 'Network & Master Data',
+            items: [
+                { label: 'Roads (A, B, C)', route: '/roads', icon: 'pi pi-map', permission: 'roads.view' },
+                { label: 'Retailer Shops', route: '/retailers', icon: 'pi pi-shop', permission: 'retailers.view' },
+                { label: 'Central Warehouse Stock', route: '/stock', icon: 'pi pi-box', permission: 'stock.view' },
+                { label: 'Stock Adjustments', route: '/stock-adjustments', icon: 'pi pi-sliders-h', permission: 'stock.adjust' },
+                { label: 'Product Catalog', route: '/products', icon: 'pi pi-tags', permission: 'products.view' },
+                { label: 'Suppliers (Tier 1)', route: '/suppliers', icon: 'pi pi-building', permission: 'suppliers.view' },
+                { label: 'Purchase Invoices', route: '/purchases', icon: 'pi pi-shopping-cart', permission: 'purchases.view' },
+            ],
+        },
+        {
+            title: 'Finance & Governance',
+            items: [
+                { label: 'Road Reconciliation', route: '/reports/road-settlement', icon: 'pi pi-calculator', permission: 'reports.view' },
+                { label: 'Overhead Expenses', route: '/expenses', icon: 'pi pi-wallet', permission: 'expenses.view' },
+                { label: 'User Management', route: '/users', icon: 'pi pi-users', permission: 'users.view' },
+                { label: 'Roles & Permissions', route: '/roles', icon: 'pi pi-shield', permission: 'roles.view' },
+                { label: 'General Settings', route: '/settings', icon: 'pi pi-cog', permission: 'settings.manage' },
+                { label: 'Database Backup', route: '/backup', icon: 'pi pi-database', permission: 'backup.manage' },
+            ],
+        },
+    ];
+
+    return rawSections
+        .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => hasPermission(item.permission)),
+        }))
+        .filter((section) => section.items.length > 0);
+});
 
 const isCurrentRoute = (url) => {
     return page.url === url || (url !== '/dashboard' && page.url.startsWith(url));
@@ -261,6 +285,7 @@ const isCurrentRoute = (url) => {
                     <div class="flex items-center gap-3">
                         <!-- Quick Link for Memo -->
                         <Link
+                            v-if="hasPermission('memos.create')"
                             href="/memos?action=create"
                             class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs transition shadow-xs"
                         >
@@ -293,7 +318,7 @@ const isCurrentRoute = (url) => {
                 </header>
 
                 <!-- Page Content -->
-                <main class="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto">
+                <main class="flex-1 p-4 lg:p-4 max-w-8xl w-full mx-auto">
                     <slot />
                 </main>
             </div>

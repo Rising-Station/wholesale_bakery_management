@@ -13,6 +13,7 @@ import Tag from 'primevue/tag';
 import ToggleSwitch from 'primevue/toggleswitch';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import Avatar from 'primevue/avatar';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     users: {
@@ -225,9 +226,9 @@ const executeDelete = () => {
                     </template>
                 </Column>
 
-                <Column field="created_at" header="Registered Date">
+                <Column field="created_at" header="Registered Date" style="width: 140px">
                     <template #body="{ data }">
-                        <span class="text-xs text-slate-500">{{ data.created_at }}</span>
+                        <span class="text-xs text-slate-700 font-medium">{{ formatDate(data.created_at) }}</span>
                     </template>
                 </Column>
 

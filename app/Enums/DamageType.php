@@ -7,6 +7,7 @@ enum DamageType: string
     case Expired = 'EXPIRED';
     case Damaged = 'DAMAGED';
     case TransitLoss = 'TRANSIT_LOSS';
+    case BrokenPacket = 'BROKEN_PACKET';
 
     /**
      * Get human-readable label.
@@ -15,8 +16,9 @@ enum DamageType: string
     {
         return match ($this) {
             self::Expired => 'Expired Date',
-            self::Damaged => 'Damaged / Broken Pack',
+            self::Damaged => 'Damaged / Spoiled',
             self::TransitLoss => 'Transit Loss',
+            self::BrokenPacket => 'Opened / Broken Packaging (Loose)',
         };
     }
 
@@ -27,8 +29,9 @@ enum DamageType: string
     {
         return match ($this) {
             self::Expired => 'danger',
-            self::Damaged => 'warn',
+            self::Damaged => 'danger',
             self::TransitLoss => 'secondary',
+            self::BrokenPacket => 'warn',
         };
     }
 }

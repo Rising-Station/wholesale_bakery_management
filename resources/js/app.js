@@ -10,6 +10,7 @@ import ConfirmationService from 'primevue/confirmationservice';
 import DialogService from 'primevue/dialogservice';
 import Tooltip from 'primevue/tooltip';
 import { route } from './routes';
+import { formatDate, formatDateTime } from './Utils/date';
 
 window.route = route;
 
@@ -29,6 +30,8 @@ createInertiaApp({
         const vueApp = createApp({ render: () => h(App, props) });
 
         vueApp.config.globalProperties.route = route;
+        vueApp.config.globalProperties.$formatDate = formatDate;
+        vueApp.config.globalProperties.$formatDateTime = formatDateTime;
 
         vueApp.use(plugin);
         vueApp.use(PrimeVue, {

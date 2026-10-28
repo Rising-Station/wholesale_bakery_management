@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\DamageScrapCategory;
+use App\Enums\DamageType;
 use App\Enums\DeliveryStatus;
 use App\Enums\MemoStatus;
+use App\Enums\ReturnConditionStatus;
+use App\Enums\ReturnDestinationLocation;
 use App\Enums\ReturnType;
 use App\Enums\StockLocationType;
 use App\Enums\StockMovementType;
@@ -147,27 +151,92 @@ class MemoService
 
             if (! empty($data['returns'])) {
                 foreach ($data['returns'] as $ret) {
-                    $retQty = (float) $ret['quantity'];
-                    $rate = (float) $ret['unit_deduction_rate'];
-                    $retTotal = round($retQty * $rate, 2);
+                    /** @var Product $product */
+                    $product = Product::lockForUpdate()->findOrFail($ret['product_id']);
+                    $weightPerUnit = (float) ($product->weight_per_unit_kg ?? 0);
+                    $unitsPerCartoon = (int) ($product->units_per_cartoon ?? 0);
+                    $piecesPerPacket = (int) ($product->pieces_per_packet ?? 0);
+                    $piecesPerUnit = $unitsPerCartoon > 1 ? $unitsPerCartoon : ($piecesPerPacket > 1 ? $piecesPerPacket : 0);
+
+                    $returnUnit = $ret['return_unit'] ?? 'PACKAGE';
                     $returnType = $ret['return_type'];
+
+                    $isKgSubUnit = ($returnUnit === 'KG') && $weightPerUnit > 0;
+                    $isPcsSubUnit = ($returnUnit === 'PCS') && $piecesPerUnit > 1;
+                    $isSubUnit = $isKgSubUnit || $isPcsSubUnit;
+
+                    if ($isKgSubUnit) {
+                        $subUnitQty = (float) ($ret['sub_unit_quantity'] ?? $ret['quantity']);
+                        $conversionFactor = round($subUnitQty / $weightPerUnit, 4);
+                        $packageQty = round($subUnitQty / $weightPerUnit, 3);
+                        $rate = (float) ($ret['unit_deduction_rate'] ?? 0);
+                        if ($rate <= 0 && $weightPerUnit > 0) {
+                            $rate = round((float) $product->wholesale_price / $weightPerUnit, 2);
+                        }
+                        $retTotal = round($subUnitQty * $rate, 2);
+                        $weightKg = $subUnitQty;
+                        $piecesCount = null;
+                    } elseif ($isPcsSubUnit) {
+                        $subUnitQty = (float) ($ret['sub_unit_quantity'] ?? $ret['quantity']);
+                        $conversionFactor = round($subUnitQty / $piecesPerUnit, 4);
+                        $packageQty = round($subUnitQty / $piecesPerUnit, 3);
+                        $rate = (float) ($ret['unit_deduction_rate'] ?? 0);
+                        if ($rate <= 0 && $piecesPerUnit > 0) {
+                            $rate = round((float) $product->wholesale_price / $piecesPerUnit, 2);
+                        }
+                        $retTotal = round($subUnitQty * $rate, 2);
+                        $weightKg = null;
+                        $piecesCount = (int) round($subUnitQty);
+                    } else {
+                        $subUnitQty = $weightPerUnit > 0 ? round((float) $ret['quantity'] * $weightPerUnit, 3) : null;
+                        $conversionFactor = 1.000;
+                        $packageQty = (float) $ret['quantity'];
+                        $rate = (float) $ret['unit_deduction_rate'];
+                        $retTotal = round($packageQty * $rate, 2);
+                        $weightKg = $subUnitQty;
+                        $piecesCount = $piecesPerUnit > 0 ? (int) round($packageQty * $piecesPerUnit) : null;
+                    }
+
+                    $isPartialOrBroken = $isSubUnit
+                        || ($conversionFactor < 1.0 && $conversionFactor > 0)
+                        || (($ret['condition_status'] ?? '') === 'BROKEN_PACKET')
+                        || (($ret['damage_type'] ?? '') === 'BROKEN_PACKET');
 
                     if ($returnType === ReturnType::Damage->value || $returnType === 'DAMAGE') {
                         $damageDeduction += $retTotal;
                         $affectsStock = false;
+                        $conditionStatus = ReturnConditionStatus::DamagedExpired;
+                        $destinationLocation = ReturnDestinationLocation::ScrapQuarantine;
                     } else {
                         $exchangeDeduction += $retTotal;
-                        $affectsStock = true;
+                        if ($isPartialOrBroken) {
+                            $affectsStock = false;
+                            $conditionStatus = ReturnConditionStatus::BrokenPacket;
+                            $destinationLocation = ReturnDestinationLocation::RepackHolding;
+                        } else {
+                            $affectsStock = true;
+                            $conditionStatus = ReturnConditionStatus::GoodSealed;
+                            $destinationLocation = ReturnDestinationLocation::SellableStock;
+                        }
                     }
 
                     $returnsToProcess[] = [
                         'product_id' => $ret['product_id'],
                         'return_type' => $returnType,
-                        'damage_type' => $ret['damage_type'] ?? 'DAMAGED',
-                        'quantity' => $retQty,
+                        'damage_type' => $isPartialOrBroken && ($returnType !== 'DAMAGE' && $returnType !== ReturnType::Damage->value)
+                            ? 'BROKEN_PACKET'
+                            : ($ret['damage_type'] ?? 'DAMAGED'),
+                        'return_unit' => $returnUnit,
+                        'sub_unit_quantity' => $subUnitQty,
+                        'conversion_factor' => $conversionFactor,
+                        'condition_status' => $conditionStatus,
+                        'destination_location' => $destinationLocation,
+                        'quantity' => $packageQty,
                         'unit_deduction_rate' => $rate,
                         'total_deduction_amount' => $retTotal,
                         'affects_sellable_stock' => $affectsStock,
+                        'weight_kg' => $weightKg,
+                        'pieces_count' => $piecesCount,
                         'notes' => $ret['notes'] ?? null,
                     ];
                 }
@@ -260,6 +329,11 @@ class MemoService
                     'vehicle_trip_id' => $data['vehicle_trip_id'] ?? null,
                     'return_type' => $ret['return_type'],
                     'damage_type' => $ret['damage_type'],
+                    'return_unit' => $ret['return_unit'],
+                    'sub_unit_quantity' => $ret['sub_unit_quantity'],
+                    'conversion_factor' => $ret['conversion_factor'],
+                    'condition_status' => $ret['condition_status'],
+                    'destination_location' => $ret['destination_location'],
                     'quantity' => $ret['quantity'],
                     'unit_deduction_rate' => $ret['unit_deduction_rate'],
                     'total_deduction_amount' => $ret['total_deduction_amount'],
@@ -279,7 +353,11 @@ class MemoService
                         'retailer_id' => $retailer->id,
                         'road_id' => $data['road_id'],
                         'damage_type' => $ret['damage_type'],
+                        'category' => DamageScrapCategory::ScrapDisposal,
                         'quantity' => $ret['quantity'],
+                        'weight_kg' => $ret['weight_kg'] ?? null,
+                        'pieces_count' => $ret['pieces_count'] ?? null,
+                        'return_unit' => $ret['return_unit'],
                         'status' => 'QUARANTINED',
                         'disposal_notes' => "Damage return from memo #{$memoNo}",
                         'created_by' => $user,
@@ -294,8 +372,39 @@ class MemoService
                             $tripItem->save();
                         }
                     }
+                } elseif ($ret['condition_status'] === ReturnConditionStatus::BrokenPacket || $ret['condition_status'] === ReturnConditionStatus::BrokenPacket->value) {
+                    // Scenario 2A: Partial / Loose Pack Exchange -> Route to Repackaging Holding!
+                    DamageScrapInventory::create([
+                        'product_id' => $product->id,
+                        'retailer_id' => $retailer->id,
+                        'road_id' => $data['road_id'],
+                        'damage_type' => DamageType::BrokenPacket,
+                        'category' => DamageScrapCategory::RepackHolding,
+                        'quantity' => $ret['quantity'],
+                        'weight_kg' => $ret['weight_kg'] ?? null,
+                        'pieces_count' => $ret['pieces_count'] ?? null,
+                        'return_unit' => $ret['return_unit'],
+                        'status' => 'REPACK_HOLDING',
+                        'disposal_notes' => "Fresh loose/broken pack exchange return from memo #{$memoNo}. Sub-unit: {$ret['sub_unit_quantity']} {$ret['return_unit']}. Awaiting warehouse repackaging.",
+                        'created_by' => $user,
+                    ]);
+
+                    // Record audit movement into Repackaging Holding location
+                    $this->stockService->recordMovement(
+                        product: $product,
+                        type: StockMovementType::PartialExchange,
+                        source: ! empty($data['vehicle_trip_id']) ? StockLocationType::VehicleTransit : StockLocationType::CentralWarehouse,
+                        destination: StockLocationType::RepackHolding,
+                        quantity: $ret['quantity'],
+                        balanceBefore: (float) $product->warehouse_stock,
+                        balanceAfter: (float) $product->warehouse_stock,
+                        referenceType: 'SalesMemo',
+                        referenceId: $memo->id,
+                        remarks: "Partial pack exchange ({$ret['sub_unit_quantity']} {$ret['return_unit']}) held in Repackaging Bay from memo #{$memoNo}",
+                        userId: $user
+                    );
                 } else {
-                    // Scenario 2: Product Exchange -> Increases sellable stock!
+                    // Scenario 2B: Full Sealed Product Exchange in Good Condition -> Increases sellable stock!
                     if (! empty($data['vehicle_trip_id'])) {
                         $tripItem = VehicleTripItem::where('vehicle_trip_id', $data['vehicle_trip_id'])
                             ->where('product_id', $product->id)
@@ -320,7 +429,7 @@ class MemoService
                             balanceAfter: $balanceAfter,
                             referenceType: 'SalesMemo',
                             referenceId: $memo->id,
-                            remarks: "Exchanged good product returned from memo #{$memoNo}",
+                            remarks: "Exchanged sealed good product returned from memo #{$memoNo}",
                             userId: $user
                         );
                     }

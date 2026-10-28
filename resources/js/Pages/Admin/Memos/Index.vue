@@ -11,6 +11,7 @@ import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatDate } from '@/Utils/date';
 
 const props = defineProps({
     memos: {
@@ -169,13 +170,19 @@ const subtotal = computed(() => {
 const damageDeduction = computed(() => {
     return form.returns
         .filter((r) => r.return_type === 'DAMAGE')
-        .reduce((s, r) => s + (Number(r.quantity || 0) * Number(r.unit_deduction_rate || 0)), 0);
+        .reduce((s, r) => {
+            const qty = r.return_unit !== 'PACKAGE' && r.sub_unit_quantity != null ? Number(r.sub_unit_quantity) : Number(r.quantity || 0);
+            return s + (qty * Number(r.unit_deduction_rate || 0));
+        }, 0);
 });
 
 const exchangeDeduction = computed(() => {
     return form.returns
         .filter((r) => r.return_type === 'EXCHANGE')
-        .reduce((s, r) => s + (Number(r.quantity || 0) * Number(r.unit_deduction_rate || 0)), 0);
+        .reduce((s, r) => {
+            const qty = r.return_unit !== 'PACKAGE' && r.sub_unit_quantity != null ? Number(r.sub_unit_quantity) : Number(r.quantity || 0);
+            return s + (qty * Number(r.unit_deduction_rate || 0));
+        }, 0);
 });
 
 const grandTotal = computed(() => {
@@ -313,6 +320,9 @@ const addReturnRow = () => {
         product_id: null,
         return_type: 'DAMAGE',
         damage_type: 'DAMAGED',
+        return_unit: 'PACKAGE',
+        sub_unit_quantity: null,
+        condition_status: 'DAMAGED_EXPIRED',
         quantity: 1,
         unit_deduction_rate: 0,
         notes: '',
@@ -323,10 +333,123 @@ const removeReturnRow = (idx) => {
     form.returns.splice(idx, 1);
 };
 
+const getProductForReturn = (productId) => {
+    return props.products.find((p) => p.id === productId) || null;
+};
+
+const getAvailableUnitsForProduct = (productId) => {
+    const product = getProductForReturn(productId);
+    if (!product) return [{ label: 'Full Pack / Cartoon', value: 'PACKAGE' }];
+
+    const units = [{ label: 'Full Pack / Cartoon', value: 'PACKAGE' }];
+    const pcsPerCtn = Number(product.units_per_cartoon || product.pieces_per_packet || 0);
+    if (pcsPerCtn > 1) {
+        units.push({ label: `Loose Pieces (Pcs)`, value: 'PCS' });
+    }
+    const weight = Number(product.weight_per_unit_kg || 0);
+    if (weight > 0) {
+        units.push({ label: `Loose Weight (Kg)`, value: 'KG' });
+    }
+    return units;
+};
+
 const onReturnProductSelect = (idx, productId) => {
     const product = props.products.find((p) => p.id === productId);
-    if (product) {
-        form.returns[idx].unit_deduction_rate = Number(product.wholesale_price);
+    if (!product) return;
+    const row = form.returns[idx];
+    const weight = Number(product.weight_per_unit_kg || 0);
+    const pcsPerCtn = Number(product.units_per_cartoon || product.pieces_per_packet || 0);
+
+    if (row.return_unit === 'PCS' && pcsPerCtn > 1) {
+        row.unit_deduction_rate = Number((Number(product.wholesale_price) / pcsPerCtn).toFixed(2));
+        if (!row.sub_unit_quantity) row.sub_unit_quantity = 1;
+        row.quantity = Number((Number(row.sub_unit_quantity) / pcsPerCtn).toFixed(3));
+        if (row.return_type === 'EXCHANGE') {
+            row.damage_type = 'BROKEN_PACKET';
+            row.condition_status = 'BROKEN_PACKET';
+        }
+    } else if (row.return_unit === 'KG' && weight > 0) {
+        row.unit_deduction_rate = Number((Number(product.wholesale_price) / weight).toFixed(2));
+        if (!row.sub_unit_quantity) row.sub_unit_quantity = 1;
+        row.quantity = Number((Number(row.sub_unit_quantity) / weight).toFixed(3));
+        if (row.return_type === 'EXCHANGE') {
+            row.damage_type = 'BROKEN_PACKET';
+            row.condition_status = 'BROKEN_PACKET';
+        }
+    } else {
+        row.return_unit = 'PACKAGE';
+        row.unit_deduction_rate = Number(product.wholesale_price);
+        row.sub_unit_quantity = null;
+        if (!row.quantity || Number(row.quantity) <= 0) row.quantity = 1;
+        if (row.return_type === 'EXCHANGE') {
+            row.condition_status = 'GOOD_SEALED';
+        }
+    }
+};
+
+const onReturnUnitChange = (idx) => {
+    const row = form.returns[idx];
+    const product = props.products.find((p) => p.id === row.product_id);
+    if (!product) return;
+    const weight = Number(product.weight_per_unit_kg || 0);
+    const pcsPerCtn = Number(product.units_per_cartoon || product.pieces_per_packet || 0);
+
+    if (row.return_unit === 'PCS' && pcsPerCtn > 1) {
+        row.unit_deduction_rate = Number((Number(product.wholesale_price) / pcsPerCtn).toFixed(2));
+        if (!row.sub_unit_quantity) row.sub_unit_quantity = 1;
+        row.quantity = Number((Number(row.sub_unit_quantity) / pcsPerCtn).toFixed(3));
+        if (row.return_type === 'EXCHANGE') {
+            row.damage_type = 'BROKEN_PACKET';
+            row.condition_status = 'BROKEN_PACKET';
+        }
+    } else if (row.return_unit === 'KG' && weight > 0) {
+        row.unit_deduction_rate = Number((Number(product.wholesale_price) / weight).toFixed(2));
+        if (!row.sub_unit_quantity) row.sub_unit_quantity = 1;
+        row.quantity = Number((Number(row.sub_unit_quantity) / weight).toFixed(3));
+        if (row.return_type === 'EXCHANGE') {
+            row.damage_type = 'BROKEN_PACKET';
+            row.condition_status = 'BROKEN_PACKET';
+        }
+    } else {
+        row.return_unit = 'PACKAGE';
+        row.unit_deduction_rate = Number(product.wholesale_price);
+        row.sub_unit_quantity = null;
+        if (!row.quantity || Number(row.quantity) <= 0) row.quantity = 1;
+        if (row.return_type === 'EXCHANGE') {
+            row.damage_type = 'DAMAGED';
+            row.condition_status = 'GOOD_SEALED';
+        }
+    }
+};
+
+const onSubUnitQtyChange = (idx) => {
+    const row = form.returns[idx];
+    const product = props.products.find((p) => p.id === row.product_id);
+    if (!product) return;
+    const weight = Number(product.weight_per_unit_kg || 0);
+    const pcsPerCtn = Number(product.units_per_cartoon || product.pieces_per_packet || 0);
+
+    if (row.return_unit === 'PCS' && pcsPerCtn > 1 && row.sub_unit_quantity != null) {
+        row.quantity = Number((Number(row.sub_unit_quantity) / pcsPerCtn).toFixed(3));
+    } else if (row.return_unit === 'KG' && weight > 0 && row.sub_unit_quantity != null) {
+        row.quantity = Number((Number(row.sub_unit_quantity) / weight).toFixed(3));
+    }
+};
+
+const onReturnTypeChange = (idx) => {
+    const row = form.returns[idx];
+    if (row.return_type === 'EXCHANGE') {
+        if (row.return_unit !== 'PACKAGE') {
+            row.damage_type = 'BROKEN_PACKET';
+            row.condition_status = 'BROKEN_PACKET';
+        } else {
+            row.condition_status = 'GOOD_SEALED';
+        }
+    } else {
+        row.condition_status = 'DAMAGED_EXPIRED';
+        if (row.damage_type === 'BROKEN_PACKET' && row.return_unit === 'PACKAGE') {
+            row.damage_type = 'DAMAGED';
+        }
     }
 };
 
@@ -490,7 +613,13 @@ const getStatusBadge = (status) => {
                     </template>
                 </Column>
 
-                <Column field="memo_date" header="Date" style="width: 110px" />
+                <Column field="memo_date" header="Date" style="width: 125px">
+                    <template #body="{ data }">
+                        <span class="text-xs text-slate-700 font-medium">
+                            {{ formatDate(data.memo_date) }}
+                        </span>
+                    </template>
+                </Column>
 
                 <Column field="retailer.shop_name" header="Retailer Shop">
                     <template #body="{ data }">
@@ -586,7 +715,7 @@ const getStatusBadge = (status) => {
                 header="Create Retailer Sales Delivery Memo"
                 modal
                 @hide="resetMemoForm"
-                :style="{ width: '920px', maxWidth: '98vw' }"
+                :style="{ width: '1620px', maxWidth: '98vw' }"
                 class="p-fluid"
             >
                 <form @submit.prevent="submitMemo" class="space-y-4 pt-2">
@@ -780,66 +909,123 @@ const getStatusBadge = (status) => {
                             <div
                                 v-for="(ret, idx) in form.returns"
                                 :key="idx"
-                                class="grid grid-cols-12 gap-2 sm:gap-2.5 items-start sm:items-center bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm"
+                                class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2"
                             >
-                                <div class="col-span-12 sm:col-span-4">
-                                    <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Product</label>
-                                    <Select
-                                        v-model="ret.product_id"
-                                        :options="products"
-                                        optionLabel="name"
-                                        optionValue="id"
-                                        placeholder="Select Returned Product"
-                                        class="w-full text-xs"
-                                        @change="(e) => onReturnProductSelect(idx, e.value)"
-                                    />
+                                <div class="grid grid-cols-12 gap-2 sm:gap-2.5 items-start sm:items-center">
+                                    <div class="col-span-12 sm:col-span-4">
+                                        <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Product</label>
+                                        <Select
+                                            v-model="ret.product_id"
+                                            :options="products"
+                                            optionLabel="name"
+                                            optionValue="id"
+                                            placeholder="Select Returned Product"
+                                            class="w-full text-xs"
+                                            @change="(e) => onReturnProductSelect(idx, e.value)"
+                                        />
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Return Type</label>
+                                        <Select
+                                            v-model="ret.return_type"
+                                            :options="[
+                                                { label: 'Damage Return (Scrap)', value: 'DAMAGE' },
+                                                { label: 'Product Exchange', value: 'EXCHANGE' },
+                                            ]"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            class="w-full text-xs"
+                                            @change="() => onReturnTypeChange(idx)"
+                                        />
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-2">
+                                        <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Unit</label>
+                                        <Select
+                                            v-if="getAvailableUnitsForProduct(ret.product_id).length > 1"
+                                            v-model="ret.return_unit"
+                                            :options="getAvailableUnitsForProduct(ret.product_id)"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            class="w-full text-xs"
+                                            @change="() => onReturnUnitChange(idx)"
+                                        />
+                                        <div v-else class="text-xs font-semibold text-slate-500 py-1.5 px-2 bg-slate-100 rounded border border-slate-200 text-center">
+                                            Full Pack / Cartoon
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-1">
+                                        <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">
+                                            {{ ret.return_unit === 'KG' ? 'Weight (kg)' : (ret.return_unit === 'PCS' ? 'Pieces (pcs)' : 'Cartoons / Pk') }}
+                                        </label>
+                                        <InputText
+                                            v-if="ret.return_unit === 'KG' || ret.return_unit === 'PCS'"
+                                            v-model.number="ret.sub_unit_quantity"
+                                            type="number"
+                          
+                                           
+                                            class="w-full text-xs py-1.5 text-center font-bold"
+                                            @input="() => onSubUnitQtyChange(idx)"
+                                        />
+                                        <InputText
+                                            v-else
+                                            v-model.number="ret.quantity"
+                                            type="number"
+                                            min="0.01"
+                                            step="any"
+                                            class="w-full text-xs py-1.5 text-center font-bold"
+                                        />
+                                    </div>
+
+                                    <div class="col-span-5 sm:col-span-1">
+                                        <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">
+                                            Rate (৳/{{ ret.return_unit === 'PCS' ? 'pc' : (ret.return_unit === 'KG' ? 'kg' : 'ctn') }})
+                                        </label>
+                                        <InputText
+                                            v-model.number="ret.unit_deduction_rate"
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            class="w-full text-xs py-1.5 text-center font-semibold"
+                                        />
+                                    </div>
+
+                                    <div class="col-span-1 sm:col-span-1 text-right flex items-center justify-end pt-3 sm:pt-0">
+                                        <Button
+                                            icon="pi pi-times"
+                                            severity="danger"
+                                            text
+                                            rounded
+                                            size="small"
+                                            @click="removeReturnRow(idx)"
+                                        />
+                                    </div>
                                 </div>
 
-                                <div class="col-span-6 sm:col-span-3">
-                                    <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Return Type</label>
-                                    <Select
-                                        v-model="ret.return_type"
-                                        :options="[
-                                            { label: 'Damage Return (Scrap)', value: 'DAMAGE' },
-                                            { label: 'Product Exchange (Good)', value: 'EXCHANGE' },
-                                        ]"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        class="w-full text-xs"
-                                    />
-                                </div>
+                                <div class="flex flex-wrap items-center justify-between text-[11px] pt-1 border-t border-slate-100 text-slate-500">
+                                    <div class="flex items-center gap-2">
+                                        <span v-if="ret.return_unit === 'PCS' && Number(getProductForReturn(ret.product_id)?.units_per_cartoon || getProductForReturn(ret.product_id)?.pieces_per_packet || 0) > 1" class="font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                            <i class="pi pi-box text-[10px] mr-1"></i> Loose Pieces: {{ Number(ret.sub_unit_quantity || 0) }} pcs of {{ Number(getProductForReturn(ret.product_id).units_per_cartoon || getProductForReturn(ret.product_id).pieces_per_packet) }} pcs ctn (≈ {{ Number(ret.quantity || 0).toFixed(2) }} ctn eq)
+                                        </span>
+                                        <span v-else-if="ret.return_unit === 'KG' && Number(getProductForReturn(ret.product_id)?.weight_per_unit_kg || 0) > 0" class="font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                            <i class="pi pi-box text-[10px] mr-1"></i> Loose Weight: {{ Number(ret.sub_unit_quantity || 0) }} kg of {{ Number(getProductForReturn(ret.product_id).weight_per_unit_kg) }} kg pack (≈ {{ Number(ret.quantity || 0).toFixed(2) }} pkt eq)
+                                        </span>
 
-                                <div class="col-span-3 sm:col-span-2">
-                                    <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Qty</label>
-                                    <InputText
-                                        v-model.number="ret.quantity"
-                                        type="number"
-                                        min="0.01"
-                                        step="any"
-                                        class="w-full text-xs py-1.5 text-center font-bold"
-                                    />
-                                </div>
-
-                                <div class="col-span-2 sm:col-span-2">
-                                    <label class="text-[10px] uppercase font-semibold text-slate-400 block mb-0.5">Rate (৳)</label>
-                                    <InputText
-                                        v-model.number="ret.unit_deduction_rate"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        class="w-full text-xs py-1.5 text-center font-semibold"
-                                    />
-                                </div>
-
-                                <div class="col-span-1 sm:col-span-1 text-right flex items-center justify-end pt-3 sm:pt-0">
-                                    <Button
-                                        icon="pi pi-times"
-                                        severity="danger"
-                                        text
-                                        rounded
-                                        size="small"
-                                        @click="removeReturnRow(idx)"
-                                    />
+                                        <span v-if="ret.return_type === 'EXCHANGE' && ret.return_unit !== 'PACKAGE'" class="text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 font-medium">
+                                            <i class="pi pi-shield text-[10px] mr-1"></i> Broken ctn/pack to Repack Bay (wholesale stock intact)
+                                        </span>
+                                        <span v-else-if="ret.return_type === 'EXCHANGE'" class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-medium">
+                                            <i class="pi pi-check text-[10px] mr-1"></i> Good sealed cartoon/pack restored to stock
+                                        </span>
+                                        <span v-else class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 font-medium">
+                                            <i class="pi pi-trash text-[10px] mr-1"></i> Damaged / scrap to quarantine
+                                        </span>
+                                    </div>
+                                    <div class="font-bold text-slate-800">
+                                        Credit: <span class="text-rose-600">- ৳ {{ ((ret.return_unit !== 'PACKAGE' && ret.sub_unit_quantity != null ? Number(ret.sub_unit_quantity) : Number(ret.quantity || 0)) * Number(ret.unit_deduction_rate || 0)).toFixed(2) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

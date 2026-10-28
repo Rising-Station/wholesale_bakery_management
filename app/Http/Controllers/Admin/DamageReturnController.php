@@ -66,10 +66,13 @@ class DamageReturnController extends Controller
         $totalDamageDeductions = DamageReturn::where('return_type', ReturnType::Damage->value)->sum('total_deduction_amount');
         $totalExchangeDeductions = DamageReturn::where('return_type', ReturnType::Exchange->value)->sum('total_deduction_amount');
         $quarantineScrapCount = DamageScrapInventory::where('status', 'QUARANTINED')->sum('quantity');
+        $repackHoldingCount = DamageScrapInventory::where('category', 'REPACK_HOLDING')->sum('quantity');
+        $repackHoldingWeight = DamageScrapInventory::where('category', 'REPACK_HOLDING')->sum('weight_kg');
+        $repackHoldingPieces = DamageScrapInventory::where('category', 'REPACK_HOLDING')->sum('pieces_count');
 
         $roads = Road::where('is_active', true)->select('id', 'name', 'code')->get();
         $retailers = RetailerShop::where('is_active', true)->select('id', 'shop_name')->get();
-        $products = Product::where('is_active', true)->select('id', 'name', 'code')->get();
+        $products = Product::where('is_active', true)->select('id', 'name', 'code', 'weight_per_unit_kg', 'units_per_cartoon', 'pieces_per_packet', 'packaging_type', 'wholesale_price')->get();
         $suppliers = Supplier::where('is_active', true)->select('id', 'name', 'company_name')->get();
 
         return Inertia::render('Admin/Returns/Index', [
@@ -82,6 +85,9 @@ class DamageReturnController extends Controller
                 'total_damage_deductions' => (float) $totalDamageDeductions,
                 'total_exchange_deductions' => (float) $totalExchangeDeductions,
                 'quarantine_scrap_quantity' => (float) $quarantineScrapCount,
+                'repack_holding_quantity' => (float) $repackHoldingCount,
+                'repack_holding_weight' => (float) $repackHoldingWeight,
+                'repack_holding_pieces' => (int) $repackHoldingPieces,
             ],
             'filters' => [
                 'return_type' => $returnType,

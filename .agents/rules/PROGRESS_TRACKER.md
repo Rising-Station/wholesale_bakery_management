@@ -65,13 +65,15 @@
   - Rate limiting (6 attempts / minute) with lockout protection.
   - `EnsureUserIsActive` middleware redirecting deactivated staff to login.
   - Modern, responsive Vue 3 Login Page (`resources/js/Pages/Auth/Login.vue`) with 1-click Quick Demo role fills.
-- [x] Setup route authorization middleware (`auth`, `active.user`) protecting `/dashboard` and administrative routes.
+- [x] Setup route authorization middleware (`auth`, `active.user`, `can:*`, `permission`, `role`) protecting `/dashboard` and administrative routes.
+- [x] Implement UI navigation and action guards (`hasPermission()`, `hasRole()`, dynamic sidebar filtering in `AppLayout.vue`).
 - **Phase 2 Verification:**
   - [x] Staff can sign in using either email or phone number.
   - [x] Deactivated staff accounts are prevented from logging in.
   - [x] Logout invalidates session and regenerates CSRF token.
   - [x] Unauthenticated guests attempting to visit `/dashboard` are redirected to `/login`.
-  - [x] Automated feature tests passing for authentication and user/role flows (14 tests, 47 assertions).
+  - [x] Unauthorized staff roles are blocked (HTTP 403 Forbidden) from accessing restricted routes and modules.
+  - [x] Automated feature tests passing for authentication, user/role RBAC flows (18 tests, 54 assertions).
 
 ---
 
@@ -192,6 +194,12 @@
     - Stock impact: **Increases sellable stock** (`affects_sellable_stock = true`).
       - In vehicle trip: adds back into vehicle's active trip stock (`exchanged_quantity`), allowing immediate resale or return to depot.
       - In central warehouse/direct memos: logs `StockMovementType::EXCHANGE_RETURN`, directly increasing central warehouse stock.
+  - **Sub-Unit & Partial Pack Exchange Engine (e.g. Chanachur 5kg packet returned 2 kg):**
+    - Allows retailers to exchange fractional weight/loose contents (e.g. 2 kg out of a 5kg packet).
+    - Pro-rated financial credit: Auto-computes rate per kg ($\text{wholesale\_price} / \text{weight\_per\_unit\_kg}$) and deducts accurate value (e.g. ৳850 / 5kg = ৳170/kg * 2kg = ৳340 credit).
+    - **Stock Integrity Protection**: Broken/partial packages do **NOT** increment wholesale sealed package inventory. Automatically routed to Repackaging Bay Quarantine (`damage_scrap_inventory` with `category = 'REPACK_HOLDING'`, `damage_type = 'BROKEN_PACKET'`) for rebagging or kitchen reprocessing.
+    - Live UI selection: Toggle between `Full Pack` and `Loose / Kg (Weight)` with real-time conversion and repack status badges.
+    - Repack Bay Holding KPI metric and audit trail on Returns Dashboard (`Admin/Returns/Index.vue`).
 - [x] Return UI in Memo Screen:
   - Select Return Type: `Damage Return` (Scenario 1) or `Product Exchange` (Scenario 2).
   - Add returned product rows with quantity and deduction rate (auto-populated from wholesale price).
