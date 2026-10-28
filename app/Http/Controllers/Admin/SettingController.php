@@ -41,6 +41,7 @@ class SettingController extends Controller
                 'low_stock_threshold_default' => ['required', 'numeric', 'min:1'],
                 'sms_alerts_enabled' => ['required', 'in:0,1'],
                 'enable_credit_limit_warnings' => ['required', 'in:0,1'],
+                'enable_demo_login' => ['sometimes', 'in:0,1'],
             ]);
 
             foreach ($data as $key => $val) {

@@ -39,6 +39,7 @@ class ExpenseAndSettingsSeeder extends Seeder
             'low_stock_threshold_default' => '20',
             'sms_alerts_enabled' => '0',
             'enable_credit_limit_warnings' => '1',
+            'enable_demo_login' => '1',
         ];
 
         foreach ($defaultSettings as $key => $val) {

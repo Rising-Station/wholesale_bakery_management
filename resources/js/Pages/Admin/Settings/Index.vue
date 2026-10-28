@@ -25,6 +25,7 @@ const form = useForm({
     low_stock_threshold_default: Number(props.settings.low_stock_threshold_default) || 20,
     sms_alerts_enabled: props.settings.sms_alerts_enabled === '1' ? '1' : '0',
     enable_credit_limit_warnings: props.settings.enable_credit_limit_warnings === '1' ? '1' : '0',
+    enable_demo_login: props.settings.enable_demo_login === '0' ? '0' : '1',
 });
 
 const toggleOptions = [
@@ -112,10 +113,10 @@ const submitSettings = () => {
                 <div class="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm space-y-4">
                     <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2 border-b pb-2">
                         <i class="pi pi-sliders-h text-emerald-600"></i>
-                        Stock Alerts & Credit Governance
+                        Stock Alerts & Operational Governance
                     </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Default Low Stock Alert Threshold</label>
                             <InputNumber v-model="form.low_stock_threshold_default" :min="1" class="w-full font-mono font-bold" />
@@ -144,6 +145,18 @@ const submitSettings = () => {
                                 class="w-full text-sm"
                             />
                             <span class="text-[11px] text-slate-400">Warn salesperson if retailer exceeds credit limit.</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Quick Demo Login Shortcuts</label>
+                            <Select
+                                v-model="form.enable_demo_login"
+                                :options="toggleOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full text-sm"
+                            />
+                            <span class="text-[11px] text-slate-400">Show or hide 1-click staff demo credentials on the login screen.</span>
                         </div>
                     </div>
                 </div>

@@ -232,6 +232,14 @@ const submitCategory = () => {
                 life: 3500,
             });
         },
+        onError: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: categoryForm.errors.name || 'Please check the category form inputs.',
+                life: 4000,
+            });
+        },
     });
 };
 
@@ -362,28 +370,6 @@ const deleteUnit = (unit) => {
             },
         });
     }
-};
-            // If new category was created and product modal is open, auto-select it
-            if (showProductModal.value && page.props.categories?.length > 0) {
-                const matched = page.props.categories.find(
-                    (c) => c.name.toLowerCase() === savedName.toLowerCase()
-                );
-                if (matched) {
-                    form.category_id = matched.id;
-                }
-            }
-            categoryForm.reset();
-            categoryForm.clearErrors();
-        },
-        onError: () => {
-            toast.add({
-                severity: 'error',
-                summary: 'Validation Error',
-                detail: categoryForm.errors.name || 'Please check the category form inputs.',
-                life: 4000,
-            });
-        },
-    });
 };
 
 const deleteCategory = (category) => {

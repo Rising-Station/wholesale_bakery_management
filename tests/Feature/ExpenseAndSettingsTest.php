@@ -127,6 +127,28 @@ class ExpenseAndSettingsTest extends TestCase
         $this->assertEquals('1', Setting::get('sms_alerts_enabled'));
     }
 
+    public function test_user_can_update_demo_login_setting(): void
+    {
+        $response = $this->put(route('settings.update'), [
+            'bakery_name' => 'Mominul Bekari Hub',
+            'bakery_phone' => '+880 1711-999999',
+            'bakery_email' => 'contact@mominulbekari.com',
+            'bakery_address' => 'Tejgaon Industrial Area, Dhaka',
+            'currency_symbol' => '৳',
+            'receipt_header' => 'Mominul Bekari Best Quality',
+            'receipt_footer' => 'Call 01711-999999 for orders',
+            'low_stock_threshold_default' => 20,
+            'sms_alerts_enabled' => '0',
+            'enable_credit_limit_warnings' => '1',
+            'enable_demo_login' => '0',
+        ]);
+
+        $response->assertRedirect(route('settings.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertEquals('0', Setting::get('enable_demo_login'));
+    }
+
     public function test_user_can_create_database_backup_snapshot(): void
     {
         $response = $this->post(route('backup.store'));

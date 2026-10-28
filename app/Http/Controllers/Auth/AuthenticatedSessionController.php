@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,8 +18,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
+        $settingValue = Setting::get('enable_demo_login');
+        $demoLoginEnabled = $settingValue !== null
+            ? filter_var($settingValue, FILTER_VALIDATE_BOOLEAN)
+            : (bool) config('auth.demo_login_enabled', true);
+
         return Inertia::render('Auth/Login', [
             'status' => session('status'),
+            'demoLoginEnabled' => $demoLoginEnabled,
         ]);
     }
 

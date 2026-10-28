@@ -7,12 +7,18 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Message from 'primevue/message';
 
-defineProps({
+const props = defineProps({
     status: {
         type: String,
         default: null,
     },
+    demoLoginEnabled: {
+        type: Boolean,
+        default: true,
+    },
 });
+
+const showDemoRoles = ref(true);
 
 const form = useForm({
     login: '',
@@ -174,12 +180,24 @@ const fillDemoCredentials = (role) => {
                     </div>
                 </form>
 
-                <!-- Divider -->
-                <div class="mt-6 pt-6 border-t border-slate-100">
-                    <p class="text-center text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
-                        ⚡ Quick Demo Login (Click to Auto-fill)
-                    </p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <!-- Quick Demo Login Section -->
+                <div v-if="demoLoginEnabled" class="mt-6 pt-6 border-t border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            ⚡ Quick Demo Login (Click to Auto-fill)
+                        </span>
+                        <button
+                            type="button"
+                            @click="showDemoRoles = !showDemoRoles"
+                            class="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition-colors px-2 py-0.5 rounded-lg hover:bg-amber-50"
+                            :title="showDemoRoles ? 'Hide demo login shortcuts' : 'Show demo login shortcuts'"
+                        >
+                            <span>{{ showDemoRoles ? 'Hide' : 'Show' }}</span>
+                            <i :class="showDemoRoles ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <div v-show="showDemoRoles" class="grid grid-cols-1 sm:grid-cols-2 gap-2 transition-all">
                         <button
                             v-for="role in demoRoles"
                             :key="role.role"

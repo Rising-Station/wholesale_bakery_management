@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Quick Demo Login Toggle
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, 1-click demo login buttons are displayed on the staff
+    | login screen. Set to false in production environments.
+    |
+    */
+
+    'demo_login_enabled' => env('DEMO_LOGIN_ENABLED', true),
+
 ];

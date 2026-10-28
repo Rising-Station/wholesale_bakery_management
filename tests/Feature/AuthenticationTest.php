@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -22,6 +24,30 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get(route('login'));
         $response->assertStatus(200);
+    }
+
+    public function test_login_screen_provides_demo_login_enabled_true_by_default(): void
+    {
+        $response = $this->get(route('login'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/Login')
+            ->where('demoLoginEnabled', true)
+        );
+    }
+
+    public function test_login_screen_respects_disabled_demo_login_setting(): void
+    {
+        Setting::set('enable_demo_login', '0', 'general');
+
+        $response = $this->get(route('login'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Auth/Login')
+            ->where('demoLoginEnabled', false)
+        );
     }
 
     public function test_users_can_authenticate_using_email(): void
