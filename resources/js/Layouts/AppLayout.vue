@@ -125,7 +125,15 @@ const navSections = computed(() => {
                 { label: 'Overhead Expenses', route: '/expenses', icon: 'pi pi-wallet', permission: 'expenses.view' },
                 { label: 'User Management', route: '/users', icon: 'pi pi-users', permission: 'users.view' },
                 { label: 'Roles & Permissions', route: '/roles', icon: 'pi pi-shield', permission: 'roles.view' },
-                { label: 'General Settings', route: '/settings', icon: 'pi pi-cog', permission: 'settings.manage' },
+                {
+                    label: 'Settings',
+                    icon: 'pi pi-cog',
+                    permission: 'settings.manage',
+                    children: [
+                        { label: 'General Setting', route: '/settings?tab=general', icon: 'pi pi-sliders-h' },
+                        { label: 'Homepage CMS', route: '/settings?tab=cms', icon: 'pi pi-globe' },
+                    ],
+                },
                 { label: 'Database Backup', route: '/backup', icon: 'pi pi-database', permission: 'backup.manage' },
             ],
         },
@@ -139,9 +147,54 @@ const navSections = computed(() => {
         .filter((section) => section.items.length > 0);
 });
 
+const openDropdowns = ref(['Settings']);
+
+const toggleDropdown = (label) => {
+    if (openDropdowns.value.includes(label)) {
+        openDropdowns.value = openDropdowns.value.filter((l) => l !== label);
+    } else {
+        openDropdowns.value.push(label);
+    }
+};
+
+const handleParentClick = (item) => {
+    if (!sidebarOpen.value) {
+        sidebarOpen.value = true;
+        if (!openDropdowns.value.includes(item.label)) {
+            openDropdowns.value.push(item.label);
+        }
+        return;
+    }
+    toggleDropdown(item.label);
+};
+
 const isCurrentRoute = (url) => {
+    if (!url) return false;
+    if (url === '/settings?tab=general') {
+        return page.url === '/settings' || page.url.includes('tab=general');
+    }
+    if (url === '/settings?tab=cms') {
+        return page.url.includes('tab=cms');
+    }
     return page.url === url || (url !== '/dashboard' && page.url.startsWith(url));
 };
+
+const isParentActive = (item) => {
+    if (item.children) {
+        return item.children.some((child) => isCurrentRoute(child.route)) || (item.label === 'Settings' && page.url.startsWith('/settings'));
+    }
+    return isCurrentRoute(item.route);
+};
+
+watch(
+    () => page.url,
+    (newUrl) => {
+        if (newUrl.startsWith('/settings') && !openDropdowns.value.includes('Settings')) {
+            openDropdowns.value.push('Settings');
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <template>
@@ -189,28 +242,79 @@ const isCurrentRoute = (url) => {
                         <div v-else class="h-2"></div>
 
                         <div class="space-y-1">
-                            <Link
-                                v-for="(item, iIdx) in section.items"
-                                :key="iIdx"
-                                :href="item.route"
-                                :class="[
-                                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative',
-                                    isCurrentRoute(item.route)
-                                        ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20'
-                                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white',
-                                    !sidebarOpen ? 'justify-center' : '',
-                                ]"
-                                :title="!sidebarOpen ? item.label : ''"
-                            >
-                                <i :class="[item.icon, 'text-base shrink-0', isCurrentRoute(item.route) ? 'text-slate-950' : 'text-slate-400 group-hover:text-amber-400']"></i>
-                                <span v-if="sidebarOpen" class="truncate">{{ item.label }}</span>
-                                <span
-                                    v-if="sidebarOpen && item.badge"
-                                    class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300"
+                            <template v-for="(item, iIdx) in section.items" :key="iIdx">
+                                <!-- Submenu Dropdown Item -->
+                                <div v-if="item.children && item.children.length > 0" class="space-y-1">
+                                    <button
+                                        type="button"
+                                        @click="handleParentClick(item)"
+                                        :class="[
+                                            'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative cursor-pointer text-left',
+                                            isParentActive(item)
+                                                ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/20'
+                                                : 'text-slate-300 hover:bg-slate-800/80 hover:text-white',
+                                            !sidebarOpen ? 'justify-center' : 'justify-between',
+                                        ]"
+                                        :title="!sidebarOpen ? item.label : ''"
+                                    >
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <i :class="[item.icon, 'text-base shrink-0', isParentActive(item) ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400']"></i>
+                                            <span v-if="sidebarOpen" class="truncate">{{ item.label }}</span>
+                                        </div>
+                                        <i
+                                            v-if="sidebarOpen"
+                                            :class="[
+                                                'pi text-xs text-slate-400 transition-transform duration-200',
+                                                openDropdowns.includes(item.label) ? 'pi-chevron-down' : 'pi-chevron-right'
+                                            ]"
+                                        ></i>
+                                    </button>
+
+                                    <!-- Submenu Children -->
+                                    <div
+                                        v-if="openDropdowns.includes(item.label) && sidebarOpen"
+                                        class="pl-4 pr-1 py-1 space-y-1 border-l-2 border-slate-800 ml-5"
+                                    >
+                                        <Link
+                                            v-for="(child, cIdx) in item.children"
+                                            :key="cIdx"
+                                            :href="child.route"
+                                            :class="[
+                                                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all',
+                                                isCurrentRoute(child.route)
+                                                    ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                                                    : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200',
+                                            ]"
+                                        >
+                                            <i :class="[child.icon, 'text-xs shrink-0', isCurrentRoute(child.route) ? 'text-slate-950' : 'text-slate-500']"></i>
+                                            <span class="truncate">{{ child.label }}</span>
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <!-- Normal Single Link Item -->
+                                <Link
+                                    v-else
+                                    :href="item.route"
+                                    :class="[
+                                        'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative',
+                                        isCurrentRoute(item.route)
+                                            ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20'
+                                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-white',
+                                        !sidebarOpen ? 'justify-center' : '',
+                                    ]"
+                                    :title="!sidebarOpen ? item.label : ''"
                                 >
-                                    {{ item.badge }}
-                                </span>
-                            </Link>
+                                    <i :class="[item.icon, 'text-base shrink-0', isCurrentRoute(item.route) ? 'text-slate-950' : 'text-slate-400 group-hover:text-amber-400']"></i>
+                                    <span v-if="sidebarOpen" class="truncate">{{ item.label }}</span>
+                                    <span
+                                        v-if="sidebarOpen && item.badge"
+                                        class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300"
+                                    >
+                                        {{ item.badge }}
+                                    </span>
+                                </Link>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -252,21 +356,69 @@ const isCurrentRoute = (url) => {
                                 {{ section.title }}
                             </div>
                             <div class="space-y-1">
-                                <Link
-                                    v-for="(item, iIdx) in section.items"
-                                    :key="iIdx"
-                                    :href="item.route"
-                                    @click="mobileMenuOpen = false"
-                                    :class="[
-                                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition',
-                                        isCurrentRoute(item.route)
-                                            ? 'bg-amber-500 text-slate-950 font-semibold'
-                                            : 'text-slate-300 hover:bg-slate-800',
-                                    ]"
-                                >
-                                    <i :class="[item.icon, 'text-base']"></i>
-                                    <span>{{ item.label }}</span>
-                                </Link>
+                                <template v-for="(item, iIdx) in section.items" :key="iIdx">
+                                    <!-- Mobile Submenu Dropdown Item -->
+                                    <div v-if="item.children && item.children.length > 0" class="space-y-1">
+                                        <button
+                                            type="button"
+                                            @click="toggleDropdown(item.label)"
+                                            :class="[
+                                                'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer text-left',
+                                                isParentActive(item)
+                                                    ? 'bg-slate-800 text-amber-400 font-semibold border border-amber-500/20'
+                                                    : 'text-slate-300 hover:bg-slate-800',
+                                            ]"
+                                        >
+                                            <div class="flex items-center gap-3">
+                                                <i :class="[item.icon, 'text-base', isParentActive(item) ? 'text-amber-400' : 'text-slate-400']"></i>
+                                                <span>{{ item.label }}</span>
+                                            </div>
+                                            <i
+                                                :class="[
+                                                    'pi text-xs text-slate-400 transition-transform duration-200',
+                                                    openDropdowns.includes(item.label) ? 'pi-chevron-down' : 'pi-chevron-right'
+                                                ]"
+                                            ></i>
+                                        </button>
+
+                                        <div
+                                            v-if="openDropdowns.includes(item.label)"
+                                            class="pl-4 py-1 space-y-1 border-l-2 border-slate-800 ml-5"
+                                        >
+                                            <Link
+                                                v-for="(child, cIdx) in item.children"
+                                                :key="cIdx"
+                                                :href="child.route"
+                                                @click="mobileMenuOpen = false"
+                                                :class="[
+                                                    'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition',
+                                                    isCurrentRoute(child.route)
+                                                        ? 'bg-amber-500 text-slate-950 font-bold'
+                                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white',
+                                                ]"
+                                            >
+                                                <i :class="[child.icon, 'text-xs', isCurrentRoute(child.route) ? 'text-slate-950' : 'text-slate-500']"></i>
+                                                <span>{{ child.label }}</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mobile Normal Link Item -->
+                                    <Link
+                                        v-else
+                                        :href="item.route"
+                                        @click="mobileMenuOpen = false"
+                                        :class="[
+                                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition',
+                                            isCurrentRoute(item.route)
+                                                ? 'bg-amber-500 text-slate-950 font-semibold'
+                                                : 'text-slate-300 hover:bg-slate-800',
+                                        ]"
+                                    >
+                                        <i :class="[item.icon, 'text-base']"></i>
+                                        <span>{{ item.label }}</span>
+                                    </Link>
+                                </template>
                             </div>
                         </div>
                     </div>

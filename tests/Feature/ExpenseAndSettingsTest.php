@@ -172,5 +172,72 @@ class ExpenseAndSettingsTest extends TestCase
     {
         $response = $this->get(route('welcome'));
         $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Welcome')
+            ->has('roads')
+            ->has('products')
+            ->has('cms')
+            ->has('stats')
+        );
+    }
+
+    public function test_guest_can_submit_retailer_partnership_inquiry(): void
+    {
+        $road = Road::first();
+
+        $response = $this->post(route('retailer-inquiries.store'), [
+            'shop_name' => 'Al-Madina General Store',
+            'owner_name' => 'Md. Rafiqul Islam',
+            'phone' => '01712345678',
+            'road_id' => $road->id,
+            'message' => 'Need daily delivery of 50 cakes and 100 packets bread.',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('retailer_inquiries', [
+            'shop_name' => 'Al-Madina General Store',
+            'owner_name' => 'Md. Rafiqul Islam',
+            'phone' => '01712345678',
+            'road_id' => $road->id,
+            'status' => 'PENDING',
+        ]);
+    }
+
+    public function test_inquiry_validation_requires_existing_road(): void
+    {
+        $response = $this->post(route('retailer-inquiries.store'), [
+            'shop_name' => 'Test Shop',
+            'owner_name' => 'Test Owner',
+            'phone' => '01712345678',
+            'road_id' => 999999, // non-existent
+        ]);
+
+        $response->assertSessionHasErrors(['road_id']);
+    }
+
+    public function test_admin_can_update_cms_settings(): void
+    {
+        $response = $this->put(route('settings.update'), [
+            'bakery_name' => 'Mominul Bekari Hub',
+            'bakery_phone' => '+880 1711-999999',
+            'bakery_email' => 'contact@mominulbekari.com',
+            'bakery_address' => 'Tejgaon Industrial Area, Dhaka',
+            'currency_symbol' => '৳',
+            'receipt_header' => 'Mominul Bekari Best Quality',
+            'receipt_footer' => 'Call 01711-999999 for orders',
+            'low_stock_threshold_default' => 20,
+            'sms_alerts_enabled' => '0',
+            'enable_credit_limit_warnings' => '1',
+            'hero_title' => 'The Premier Wholesale Bakery Distribution Engine',
+            'partnership_title' => 'Enlist Your Shop in Our Fleet Today',
+        ]);
+
+        $response->assertRedirect(route('settings.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertEquals('The Premier Wholesale Bakery Distribution Engine', Setting::get('hero_title'));
+        $this->assertEquals('Enlist Your Shop in Our Fleet Today', Setting::get('partnership_title'));
     }
 }

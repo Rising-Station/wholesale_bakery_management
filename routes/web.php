@@ -23,23 +23,66 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\RetailerInquiry;
 use App\Models\RetailerPayment;
 use App\Models\RetailerShop;
 use App\Models\Road;
 use App\Models\SalesMemo;
+use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\VehicleTrip;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public Landing Page
 Route::get('/', function () {
+    $settings = Setting::all()->pluck('value', 'key')->all();
+
     return Inertia::render('Welcome', [
-        'products' => Product::where('is_active', true)->select('id', 'name', 'code', 'packaging_type', 'wholesale_price')->take(8)->get(),
+        'products' => Product::where('is_active', true)
+            ->with('category:id,name')
+            ->select('id', 'category_id', 'name', 'code', 'packaging_type', 'wholesale_price')
+            ->take(8)
+            ->get(),
         'roads' => Road::where('is_active', true)->select('id', 'name', 'code')->get(),
+        'cms' => [
+            'hero_badge' => $settings['hero_badge'] ?? null,
+            'hero_title' => $settings['hero_title'] ?? null,
+            'hero_subtitle' => $settings['hero_subtitle'] ?? null,
+            'tier1_title' => $settings['tier1_title'] ?? null,
+            'tier1_description' => $settings['tier1_description'] ?? null,
+            'tier2_title' => $settings['tier2_title'] ?? null,
+            'tier2_description' => $settings['tier2_description'] ?? null,
+            'tier3_title' => $settings['tier3_title'] ?? null,
+            'tier3_description' => $settings['tier3_description'] ?? null,
+            'partnership_title' => $settings['partnership_title'] ?? null,
+            'partnership_subtitle' => $settings['partnership_subtitle'] ?? null,
+        ],
+        'stats' => [
+            'retailers_count' => RetailerShop::where('is_active', true)->count(),
+            'routes_count' => Road::where('is_active', true)->count(),
+            'products_count' => Product::where('is_active', true)->count(),
+            'memos_count' => SalesMemo::count(),
+        ],
     ]);
 })->name('welcome');
+
+// Public Retailer Partnership Inquiry Submission
+Route::post('retailer-inquiries', function (Request $request) {
+    $data = $request->validate([
+        'shop_name' => ['required', 'string', 'max:255'],
+        'owner_name' => ['required', 'string', 'max:255'],
+        'phone' => ['required', 'string', 'max:50'],
+        'road_id' => ['required', 'exists:roads,id'],
+        'message' => ['nullable', 'string', 'max:1000'],
+    ]);
+
+    RetailerInquiry::create($data);
+
+    return back()->with('success', 'Your dealership inquiry has been received! Our route supervisor will visit your shop on the next morning round.');
+})->name('retailer-inquiries.store');
 
 // Guest Authentication Routes
 Route::middleware('guest')->group(function (): void {

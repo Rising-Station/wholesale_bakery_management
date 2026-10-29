@@ -16,3 +16,8 @@
 - [x] Make Dynamic shop name top panel bar
 
 - [x] Search in dropdown (for all dropdowns)
+
+- [x] Need to dynamic frontend public site cmsa
+- [x] Retailer Partnership form "Select Delivery Road" Should be a dropdown and road should be dynamic.
+
+- [x] Make "General Setting", "Homepage CMS" submenu under "Settings" dropdowns in sidebar

@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
+import Select from 'primevue/select';
 
 const props = defineProps({
     products: {
@@ -14,37 +15,53 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    cms: {
+        type: Object,
+        default: () => ({}),
+    },
+    stats: {
+        type: Object,
+        default: () => ({}),
+    },
     canLogin: {
         type: Boolean,
         default: true,
     },
 });
 
+const page = usePage();
+const bakeryName = computed(() => page.props.settings?.bakery_name || 'Mominul Bekari');
+const bakeryPhone = computed(() => page.props.settings?.bakery_phone || '+880 1711-000004');
+const bakeryEmail = computed(() => page.props.settings?.bakery_email || 'sales@mominulbekari.com');
+const bakeryAddress = computed(() => page.props.settings?.bakery_address || 'Central Distribution Hub, Commercial Road Zone, Dhaka');
+
+const roadsList = computed(() => {
+    if (!props.roads || props.roads.length === 0) return 'Road A, B & C';
+    return props.roads.map((r) => r.name).join(', ');
+});
+
 const inquirySubmitted = ref(false);
-const inquiryForm = ref({
+const inquiryForm = useForm({
     shop_name: '',
     owner_name: '',
     phone: '',
-    road: '',
+    road_id: null,
     message: '',
 });
 
 const submitInquiry = () => {
-    inquirySubmitted.value = true;
-    setTimeout(() => {
-        inquiryForm.value = {
-            shop_name: '',
-            owner_name: '',
-            phone: '',
-            road: '',
-            message: '',
-        };
-    }, 500);
+    inquiryForm.post(route('retailer-inquiries.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            inquirySubmitted.value = true;
+            inquiryForm.reset();
+        },
+    });
 };
 </script>
 
 <template>
-    <Head title="Mominul Bekari - Wholesale Distribution Network" />
+    <Head :title="`${bakeryName} - Wholesale Distribution Network`" />
 
     <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
         <!-- Top Navigation -->
@@ -52,11 +69,11 @@ const submitInquiry = () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-xl">
-                        M
+                        {{ bakeryName.charAt(0) }}
                     </div>
                     <div>
                         <div class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                            Mominul Bekari
+                            {{ bakeryName }}
                             <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                 Wholesale
                             </span>
@@ -98,18 +115,17 @@ const submitInquiry = () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-8">
                     <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                    Delivering Fresh Bakery Goods Daily Across Roads A, B & C
+                    {{ cms?.hero_badge || `Delivering Fresh Bakery Goods Daily Across ${roadsList}` }}
                 </div>
 
                 <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                    Reliable Wholesale Bakery Distribution For
-                    <span class="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent">
-                        Modern Retailers
+                    <span class="bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                        {{ cms?.hero_title || 'Reliable Wholesale Bakery Distribution For Modern Retailers' }}
                     </span>
                 </h1>
 
                 <p class="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                    Mominul Bekari connects manufacturing producers directly with road-side grocery and tea stall retailers through dedicated vehicle fleets, transparent dual-ledger dues, and instant mobile billing.
+                    {{ cms?.hero_subtitle || `${bakeryName} connects manufacturing producers directly with road-side grocery and tea stall retailers through dedicated vehicle fleets, transparent dual-ledger dues, and instant mobile billing.` }}
                 </p>
 
                 <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
@@ -137,20 +153,26 @@ const submitInquiry = () => {
                 <!-- Stats Highlights -->
                 <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
                     <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-                        <div class="text-3xl font-extrabold text-amber-400 font-mono">100+</div>
+                        <div class="text-3xl font-extrabold text-amber-400 font-mono">
+                            {{ stats?.retailers_count ? `${stats.retailers_count}+` : '100+' }}
+                        </div>
                         <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Active Retail Shops</div>
                     </div>
                     <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-                        <div class="text-3xl font-extrabold text-amber-400 font-mono">3 Routes</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Road A, B & C Fleet</div>
+                        <div class="text-3xl font-extrabold text-amber-400 font-mono">
+                            {{ roads.length ? `${roads.length} Routes` : '3 Routes' }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Dedicated Delivery Corridors</div>
+                    </div>
+                    <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
+                        <div class="text-3xl font-extrabold text-amber-400 font-mono">
+                            {{ stats?.products_count ? `${stats.products_count}+` : '20+' }}
+                        </div>
+                        <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Fresh Bakery Lines</div>
                     </div>
                     <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
                         <div class="text-3xl font-extrabold text-amber-400 font-mono">100%</div>
                         <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Stock Reconciled Daily</div>
-                    </div>
-                    <div class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-                        <div class="text-3xl font-extrabold text-amber-400 font-mono">0 Defect</div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wider mt-1 font-semibold">Damage Return Guarantee</div>
                     </div>
                 </div>
             </div>
@@ -161,7 +183,7 @@ const submitInquiry = () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center max-w-2xl mx-auto mb-16">
                     <h2 class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Engine Architecture</h2>
-                    <h3 class="text-3xl font-bold text-white tracking-tight">How Mominul Bekari Operates</h3>
+                    <h3 class="text-3xl font-bold text-white tracking-tight">How {{ bakeryName }} Operates</h3>
                     <p class="text-sm text-slate-400 mt-3">
                         Our integrated 3-Tier model ensures full accountability from bulk supplier manufacturing to road delivery vehicles and retailer credit.
                     </p>
@@ -174,9 +196,9 @@ const submitInquiry = () => {
                             1
                         </div>
                         <div class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold mb-1">Tier 1: Upstream Inflow</div>
-                        <h4 class="text-xl font-bold text-white mb-3">Suppliers & Procurement</h4>
+                        <h4 class="text-xl font-bold text-white mb-3">{{ cms?.tier1_title || 'Suppliers & Procurement' }}</h4>
                         <p class="text-sm text-slate-400 leading-relaxed">
-                            Producers supply bulk freshly baked biscuits, bread, buns, and cakes directly into Mominul Bekari central warehouse inventory with batch tracking and supplier due management.
+                            {{ cms?.tier1_description || `Producers supply bulk freshly baked biscuits, bread, buns, and cakes directly into ${bakeryName} central warehouse inventory with batch tracking and supplier due management.` }}
                         </p>
                     </div>
 
@@ -186,9 +208,9 @@ const submitInquiry = () => {
                             2
                         </div>
                         <div class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold mb-1">Tier 2: The Core Distribution Hub</div>
-                        <h4 class="text-xl font-bold text-white mb-3">Mominul Bekari Hub & Vehicle Fleet</h4>
+                        <h4 class="text-xl font-bold text-white mb-3">{{ cms?.tier2_title || `${bakeryName} Hub & Vehicle Fleet` }}</h4>
                         <p class="text-sm text-slate-400 leading-relaxed">
-                            Daily loading sheets transfer warehouse stock to route vehicles. Gate passes are generated and vehicles dispatched to Road A, Road B, and Road C with mobile stock invariants.
+                            {{ cms?.tier2_description || `Daily loading sheets transfer warehouse stock to route vehicles. Gate passes are generated and vehicles dispatched to ${roadsList} with mobile stock invariants.` }}
                         </p>
                     </div>
 
@@ -198,9 +220,9 @@ const submitInquiry = () => {
                             3
                         </div>
                         <div class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold mb-1">Tier 3: Downstream Delivery</div>
-                        <h4 class="text-xl font-bold text-white mb-3">Road Retailer Shops</h4>
+                        <h4 class="text-xl font-bold text-white mb-3">{{ cms?.tier3_title || 'Road Retailer Shops' }}</h4>
                         <p class="text-sm text-slate-400 leading-relaxed">
-                            Drivers issue instant sales memos with transparent live balance calculation, collect cash/MFS, deduct damage returns into quarantine, and exchange slow goods for fresh stock.
+                            {{ cms?.tier3_description || 'Drivers issue instant sales memos with transparent live balance calculation, collect cash/MFS, deduct damage returns into quarantine, and exchange slow goods for fresh stock.' }}
                         </p>
                     </div>
                 </div>
@@ -236,7 +258,9 @@ const submitInquiry = () => {
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-mono text-amber-400 font-semibold">{{ product.code }}</span>
-                            <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">{{ product.packaging_type }}</span>
+                            <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+                                {{ product.category?.name || product.packaging_type }}
+                            </span>
                         </div>
                         <h4 class="text-base font-bold text-white mt-1.5">{{ product.name }}</h4>
                         <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-800">
@@ -259,7 +283,7 @@ const submitInquiry = () => {
                     <h2 class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Fleet Route Network</h2>
                     <h3 class="text-3xl font-bold text-white tracking-tight">Dedicated Daily Delivery Corridors</h3>
                     <p class="text-sm text-slate-400 mt-3">
-                        Our dedicated distribution vehicles operate scheduled morning delivery rounds along three designated commercial roads.
+                        Our dedicated distribution vehicles operate scheduled morning delivery rounds along designated commercial roads.
                     </p>
                 </div>
 
@@ -290,9 +314,11 @@ const submitInquiry = () => {
                 <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-8 sm:p-12 rounded-3xl border border-slate-800 shadow-2xl relative">
                     <div class="text-center max-w-xl mx-auto mb-8">
                         <h2 class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2">Retailer Partnership</h2>
-                        <h3 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Join Our Retail Distribution Route</h3>
+                        <h3 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                            {{ cms?.partnership_title || 'Join Our Retail Distribution Route' }}
+                        </h3>
                         <p class="text-xs sm:text-sm text-slate-400 mt-2">
-                            Run a grocery store, tea shop, or bakery retail counter on Road A, B, or C? Sign up to receive daily fresh stock delivery.
+                            {{ cms?.partnership_subtitle || `Run a grocery store, tea shop, or bakery retail counter on ${roadsList}? Sign up to receive daily fresh stock delivery.` }}
                         </p>
                     </div>
 
@@ -302,34 +328,90 @@ const submitInquiry = () => {
                         <p class="text-xs text-slate-300">
                             Our route delivery supervisor will visit your shop on the next morning round to confirm pricing and opening stock.
                         </p>
+                        <div class="pt-2">
+                            <Button label="Submit Another Inquiry" severity="secondary" size="small" @click="inquirySubmitted = false" />
+                        </div>
                     </div>
 
                     <form v-else @submit.prevent="submitInquiry" class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Shop / Business Name *</label>
-                                <InputText v-model="inquiryForm.shop_name" placeholder="e.g. Bismillah General Store" class="w-full text-sm bg-slate-950 border-slate-700 text-white" required />
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">
+                                    Shop / Business Name <span class="text-amber-400">*</span>
+                                </label>
+                                <InputText
+                                    v-model="inquiryForm.shop_name"
+                                    placeholder="e.g. Bismillah General Store"
+                                    class="w-full text-sm !bg-slate-950 !border-slate-700 !text-white"
+                                    :class="{ 'p-invalid': inquiryForm.errors.shop_name }"
+                                    required
+                                />
+                                <span v-if="inquiryForm.errors.shop_name" class="text-xs text-rose-400 mt-1 block">
+                                    {{ inquiryForm.errors.shop_name }}
+                                </span>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Owner / Manager Name *</label>
-                                <InputText v-model="inquiryForm.owner_name" placeholder="Your Full Name" class="w-full text-sm bg-slate-950 border-slate-700 text-white" required />
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">
+                                    Owner / Manager Name <span class="text-amber-400">*</span>
+                                </label>
+                                <InputText
+                                    v-model="inquiryForm.owner_name"
+                                    placeholder="Your Full Name"
+                                    class="w-full text-sm !bg-slate-950 !border-slate-700 !text-white"
+                                    :class="{ 'p-invalid': inquiryForm.errors.owner_name }"
+                                    required
+                                />
+                                <span v-if="inquiryForm.errors.owner_name" class="text-xs text-rose-400 mt-1 block">
+                                    {{ inquiryForm.errors.owner_name }}
+                                </span>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number *</label>
-                                <InputText v-model="inquiryForm.phone" placeholder="017xxxxxxxx" class="w-full text-sm bg-slate-950 border-slate-700 text-white" required />
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">
+                                    Phone Number <span class="text-amber-400">*</span>
+                                </label>
+                                <InputText
+                                    v-model="inquiryForm.phone"
+                                    placeholder="017xxxxxxxx"
+                                    class="w-full text-sm !bg-slate-950 !border-slate-700 !text-white"
+                                    :class="{ 'p-invalid': inquiryForm.errors.phone }"
+                                    required
+                                />
+                                <span v-if="inquiryForm.errors.phone" class="text-xs text-rose-400 mt-1 block">
+                                    {{ inquiryForm.errors.phone }}
+                                </span>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Select Delivery Road</label>
-                                <InputText v-model="inquiryForm.road" placeholder="Road A / Road B / Road C" class="w-full text-sm bg-slate-950 border-slate-700 text-white" />
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">
+                                    Select Delivery Road <span class="text-amber-400">*</span>
+                                </label>
+                                <Select
+                                    v-model="inquiryForm.road_id"
+                                    :options="roads"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    placeholder="Select Delivery Road"
+                                    filter
+                                    class="w-full text-sm custom-dark-select"
+                                    :class="{ 'p-invalid': inquiryForm.errors.road_id }"
+                                    required
+                                />
+                                <span v-if="inquiryForm.errors.road_id" class="text-xs text-rose-400 mt-1 block">
+                                    {{ inquiryForm.errors.road_id }}
+                                </span>
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Message or Specific Product Requirements</label>
-                            <Textarea v-model="inquiryForm.message" rows="2" placeholder="Tell us about daily quantities or product lines you need..." class="w-full text-sm bg-slate-950 border-slate-700 text-white" />
+                            <Textarea
+                                v-model="inquiryForm.message"
+                                rows="2"
+                                placeholder="Tell us about daily quantities or product lines you need..."
+                                class="w-full text-sm !bg-slate-950 !border-slate-700 !text-white"
+                            />
                         </div>
 
                         <div class="pt-2">
@@ -337,6 +419,7 @@ const submitInquiry = () => {
                                 type="submit"
                                 label="Submit Dealership Inquiry"
                                 icon="pi pi-send"
+                                :loading="inquiryForm.processing"
                                 class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border-none py-3 shadow-lg shadow-amber-500/20"
                             />
                         </div>
@@ -348,17 +431,39 @@ const submitInquiry = () => {
         <!-- Footer -->
         <footer class="mt-auto border-t border-slate-900 bg-slate-950 py-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-300">Mominul Bekari Wholesale System</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-bold text-slate-300">{{ bakeryName }}</span>
                     <span>•</span>
-                    <span>Central Commercial Zone, Dhaka</span>
+                    <span>{{ bakeryAddress }}</span>
                     <span>•</span>
-                    <span>Hotline: +880 1711-000004</span>
+                    <span>Hotline: {{ bakeryPhone }}</span>
+                    <span v-if="bakeryEmail">•</span>
+                    <span v-if="bakeryEmail">{{ bakeryEmail }}</span>
                 </div>
                 <div>
-                    © {{ new Date().getFullYear() }} Mominul Bekari. All rights reserved.
+                    © {{ new Date().getFullYear() }} {{ bakeryName }}. All rights reserved.
                 </div>
             </div>
         </footer>
     </div>
 </template>
+
+<style scoped>
+:deep(.custom-dark-select) {
+    background-color: #020617 !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+:deep(.custom-dark-select .p-select-label) {
+    color: #f8fafc !important;
+}
+
+:deep(.custom-dark-select .p-select-label.p-placeholder) {
+    color: #94a3b8 !important;
+}
+
+:deep(.custom-dark-select .p-select-dropdown) {
+    color: #94a3b8 !important;
+}
+</style>

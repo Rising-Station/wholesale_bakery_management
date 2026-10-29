@@ -40,6 +40,18 @@ class ExpenseAndSettingsSeeder extends Seeder
             'sms_alerts_enabled' => '0',
             'enable_credit_limit_warnings' => '1',
             'enable_demo_login' => '1',
+            // Public Site CMS Content
+            'hero_badge' => 'Delivering Fresh Bakery Goods Daily Across Distribution Corridors',
+            'hero_title' => 'Reliable Wholesale Bakery Distribution For Modern Retailers',
+            'hero_subtitle' => 'Connecting manufacturing producers directly with road-side grocery and tea stall retailers through dedicated vehicle fleets, transparent dual-ledger dues, and instant mobile billing.',
+            'tier1_title' => 'Suppliers & Procurement',
+            'tier1_description' => 'Producers supply bulk freshly baked biscuits, bread, buns, and cakes directly into central warehouse inventory with batch tracking and supplier due management.',
+            'tier2_title' => 'Bakery Hub & Vehicle Fleet',
+            'tier2_description' => 'Daily loading sheets transfer warehouse stock to route vehicles. Gate passes are generated and vehicles dispatched with mobile stock invariants.',
+            'tier3_title' => 'Road Retailer Shops',
+            'tier3_description' => 'Drivers issue instant sales memos with transparent live balance calculation, collect cash/MFS, deduct damage returns into quarantine, and exchange slow goods for fresh stock.',
+            'partnership_title' => 'Join Our Retail Distribution Route',
+            'partnership_subtitle' => 'Run a grocery store, tea shop, or bakery retail counter? Sign up to receive daily fresh stock delivery.',
         ];
 
         foreach ($defaultSettings as $key => $val) {

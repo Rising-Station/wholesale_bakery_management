@@ -2,6 +2,10 @@
  * Simple client-side route resolver for named application routes.
  */
 const routePatterns = {
+    // Public & CMS
+    'welcome': '/',
+    'retailer-inquiries.store': '/retailer-inquiries',
+
     // Auth & Dashboard
     'dashboard': '/dashboard',
     'login': '/login',
