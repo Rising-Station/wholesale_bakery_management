@@ -7,11 +7,13 @@ use App\Enums\PaymentMethod;
 use App\Enums\ReturnType;
 use App\Enums\StockMovementType;
 use App\Enums\TripStatus;
+use App\Models\DamageScrapInventory;
 use App\Models\Product;
 use App\Models\RetailerShop;
 use App\Models\Road;
 use App\Models\SalesMemo;
 use App\Models\Supplier;
+use App\Models\SupplierReturnClaim;
 use App\Models\User;
 use App\Models\VehicleTrip;
 use App\Models\VehicleTripItem;
@@ -464,6 +466,171 @@ class SalesMemoAndReturnsTest extends TestCase
         // Assert memo was not created
         $this->assertDatabaseMissing('sales_memo_items', [
             'product_id' => $product->id,
+        ]);
+    }
+
+    public function test_user_can_view_returns_and_claims_page(): void
+    {
+        $response = $this->get(route('damage-returns.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Returns/Index')
+            ->has('returns')
+            ->has('claims')
+            ->has('metrics')
+        );
+    }
+
+    public function test_user_can_file_supplier_return_claim(): void
+    {
+        $supplier = Supplier::create([
+            'name' => 'Pran Factory',
+            'company_name' => 'Pran Foods',
+            'phone' => '01711000000',
+            'opening_due' => 10000,
+            'current_due' => 10000,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Broken Plain Cake',
+            'code' => 'BPC-01',
+            'packaging_type' => PackagingType::Cartoon->value,
+            'cost_price' => 50.00,
+            'wholesale_price' => 70.00,
+            'warehouse_stock' => 10,
+        ]);
+
+        $response = $this->post(route('damage-returns.claims.store'), [
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'unit_cost' => 50.00,
+            'reason' => 'Factory damaged seals',
+            'notes' => 'Driver confirmed packaging flaw',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('supplier_return_claims', [
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'quantity' => 10.00,
+            'unit_cost' => 50.00,
+            'claim_amount' => 500.00,
+            'status' => 'PENDING',
+        ]);
+    }
+
+    public function test_approving_supplier_return_claim_deducts_supplier_due_and_clears_quarantined_scrap(): void
+    {
+        $supplier = Supplier::create([
+            'name' => 'Danish Bakery Works',
+            'phone' => '01811000000',
+            'opening_due' => 8000.00,
+            'current_due' => 8000.00,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Expired Butter Bun',
+            'code' => 'EBB-01',
+            'packaging_type' => PackagingType::Pieces->value,
+            'cost_price' => 20.00,
+            'wholesale_price' => 28.00,
+            'warehouse_stock' => 5,
+        ]);
+
+        // Quarantine 15 units of scrap inventory
+        $scrap = DamageScrapInventory::create([
+            'product_id' => $product->id,
+            'damage_type' => 'EXPIRED',
+            'category' => 'SCRAP_DISPOSAL',
+            'quantity' => 15.00,
+            'status' => 'QUARANTINED',
+        ]);
+
+        $claim = SupplierReturnClaim::create([
+            'claim_no' => 'CLM-TEST-001',
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'quantity' => 15.00,
+            'unit_cost' => 20.00,
+            'claim_amount' => 300.00,
+            'reason' => 'Expired shelf life returns',
+            'status' => 'PENDING',
+            'created_by' => $this->adminUser->id,
+        ]);
+
+        $response = $this->post(route('damage-returns.claims.approve', $claim));
+
+        $response->assertSessionHas('success');
+
+        // 1. Claim status updated
+        $this->assertEquals('APPROVED', $claim->fresh()->status);
+        $this->assertNotNull($claim->fresh()->settled_at);
+        $this->assertEquals($this->adminUser->id, $claim->fresh()->approved_by);
+
+        // 2. Supplier current due reduced from 8000 to 7700
+        $this->assertEquals(7700.00, (float) $supplier->fresh()->current_due);
+
+        // 3. Supplier payment credit note logged
+        $this->assertDatabaseHas('supplier_payments', [
+            'supplier_id' => $supplier->id,
+            'payment_method' => PaymentMethod::ReturnAdjustment->value,
+            'amount' => 300.00,
+            'transaction_ref' => 'CLM-TEST-001',
+        ]);
+
+        // 4. Quarantined scrap inventory cleared
+        $this->assertEquals('RETURNED_TO_SUPPLIER', $scrap->fresh()->status);
+        $this->assertNotNull($scrap->fresh()->disposal_date);
+    }
+
+    public function test_rejecting_supplier_return_claim_updates_status_without_affecting_due(): void
+    {
+        $supplier = Supplier::create([
+            'name' => 'Akij Consumer',
+            'phone' => '01911000000',
+            'opening_due' => 5000.00,
+            'current_due' => 5000.00,
+        ]);
+
+        $product = Product::create([
+            'name' => 'Chanachur Packet',
+            'code' => 'CP-01',
+            'packaging_type' => PackagingType::Pieces->value,
+            'cost_price' => 15.00,
+            'wholesale_price' => 22.00,
+            'warehouse_stock' => 5,
+        ]);
+
+        $claim = SupplierReturnClaim::create([
+            'claim_no' => 'CLM-TEST-002',
+            'supplier_id' => $supplier->id,
+            'product_id' => $product->id,
+            'quantity' => 10.00,
+            'unit_cost' => 15.00,
+            'claim_amount' => 150.00,
+            'reason' => 'Package dampness',
+            'status' => 'PENDING',
+            'created_by' => $this->adminUser->id,
+        ]);
+
+        $response = $this->post(route('damage-returns.claims.reject', $claim), [
+            'rejection_reason' => 'Factory reported warehouse dampness, claim denied.',
+        ]);
+
+        $response->assertSessionHas('info');
+
+        // Status is REJECTED
+        $this->assertEquals('REJECTED', $claim->fresh()->status);
+        $this->assertStringContainsString('Factory reported warehouse dampness', $claim->fresh()->notes);
+
+        // Supplier due remains untouched
+        $this->assertEquals(5000.00, (float) $supplier->fresh()->current_due);
+
+        // No payment record created
+        $this->assertDatabaseMissing('supplier_payments', [
+            'transaction_ref' => 'CLM-TEST-002',
         ]);
     }
 }

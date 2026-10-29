@@ -9,6 +9,7 @@ enum PaymentMethod: string
     case Nagad = 'NAGAD';
     case BankTransfer = 'BANK_TRANSFER';
     case Cheque = 'CHEQUE';
+    case ReturnAdjustment = 'RETURN_ADJUSTMENT';
 
     /**
      * Get human-readable label.
@@ -21,6 +22,7 @@ enum PaymentMethod: string
             self::Nagad => 'Nagad',
             self::BankTransfer => 'Bank Transfer',
             self::Cheque => 'Cheque',
+            self::ReturnAdjustment => 'Damage Return Credit Note',
         };
     }
 }

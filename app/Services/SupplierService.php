@@ -113,8 +113,8 @@ class SupplierService
     public function getSupplierLedger(Supplier $supplier): Supplier
     {
         return $supplier->load([
-            'purchases' => fn ($q) => $q->latest('purchase_date')->with('items.product'),
-            'payments' => fn ($q) => $q->latest('payment_date'),
+            'purchases' => fn ($q) => $q->orderByDesc('purchase_date')->orderByDesc('id')->with('items.product'),
+            'payments' => fn ($q) => $q->orderByDesc('payment_date')->orderByDesc('id'),
             'creator:id,name',
         ]);
     }

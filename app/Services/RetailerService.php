@@ -26,7 +26,8 @@ class RetailerService
                         ->orWhere('address', 'like', "%{$search}%");
                 });
             })
-            ->latest('id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($perPage)
             ->withQueryString();
     }

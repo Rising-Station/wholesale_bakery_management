@@ -46,6 +46,16 @@ class Purchase extends Model
     }
 
     /**
+     * Retrieve the model for a bound value (supports both ID and purchase_no).
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        return $this->where('id', $value)
+            ->orWhere('purchase_no', $value)
+            ->firstOrFail();
+    }
+
+    /**
      * Supplier who provided the goods.
      */
     public function supplier(): BelongsTo

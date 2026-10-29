@@ -21,7 +21,17 @@ const sidebarOpen = ref(true);
 const mobileMenuOpen = ref(false);
 const userMenu = ref();
 
-const authUser = computed(() => page.props.auth?.user || { name: 'Mominul Bekari Admin', email: 'admin@mominulbekari.com', roles: ['SuperAdmin'] });
+const shopName = computed(() => page.props.shop_name || page.props.settings?.bakery_name || 'Mominul Bekari');
+const shopInitials = computed(() => {
+    const raw = (shopName.value || 'MB').trim();
+    const words = raw.split(/\s+/);
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return raw.substring(0, 2).toUpperCase() || 'MB';
+});
+
+const authUser = computed(() => page.props.auth?.user || { name: 'Admin Staff', email: 'admin@system.local', roles: ['SuperAdmin'] });
 
 const hasPermission = (permission) => {
     if (!permission) return true;
@@ -151,10 +161,10 @@ const isCurrentRoute = (url) => {
                 <div class="h-16 flex items-center justify-between px-4 bg-slate-950/60 border-b border-slate-800/80">
                     <Link href="/dashboard" class="flex items-center gap-3 overflow-hidden">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-bold text-xl shadow-md shrink-0">
-                            MB
+                            {{ shopInitials }}
                         </div>
-                        <div v-if="sidebarOpen" class="flex flex-col">
-                            <span class="font-bold text-white text-base tracking-tight leading-tight">Mominul Bekari</span>
+                        <div v-if="sidebarOpen" class="flex flex-col min-w-0">
+                            <span class="font-bold text-white text-base tracking-tight leading-tight truncate" :title="shopName">{{ shopName }}</span>
                             <span class="text-[10px] uppercase font-semibold text-amber-400 tracking-wider">Wholesale Hub</span>
                         </div>
                     </Link>
@@ -225,11 +235,11 @@ const isCurrentRoute = (url) => {
             >
                 <div class="w-72 bg-slate-900 h-full flex flex-col p-4 text-slate-200" @click.stop>
                     <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-bold">
-                                MB
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-bold shrink-0">
+                                {{ shopInitials }}
                             </div>
-                            <span class="font-bold text-white text-lg">Mominul Bekari</span>
+                            <span class="font-bold text-white text-lg truncate">{{ shopName }}</span>
                         </div>
                         <button @click="mobileMenuOpen = false" class="p-1 rounded-lg text-slate-400 hover:text-white">
                             <i class="pi pi-times"></i>
@@ -267,17 +277,21 @@ const isCurrentRoute = (url) => {
             <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
                 <!-- Topbar -->
                 <header class="h-16 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
                         <button
                             @click="mobileMenuOpen = true"
-                            class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                            class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 shrink-0"
                         >
                             <i class="pi pi-bars text-lg"></i>
                         </button>
-                        <div>
-                            <h1 class="text-lg lg:text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <h1 class="text-lg lg:text-xl font-bold text-slate-900 flex items-center gap-2 truncate">
                                 {{ title }}
                             </h1>
+                            <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold shadow-xs shrink-0">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                <span class="max-w-[200px] md:max-w-xs truncate" :title="shopName">{{ shopName }}</span>
+                            </div>
                         </div>
                     </div>
 

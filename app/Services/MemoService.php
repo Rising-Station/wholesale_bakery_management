@@ -42,7 +42,8 @@ class MemoService
         ?string $dateTo = null
     ): LengthAwarePaginator {
         $query = SalesMemo::with(['retailer', 'road', 'creator:id,name'])
-            ->latest('memo_date');
+            ->orderByDesc('memo_date')
+            ->orderByDesc('id');
 
         if ($roadId) {
             $query->where('road_id', $roadId);

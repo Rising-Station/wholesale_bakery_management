@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { Head, useForm, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AppDataTable from '@/Components/AppDataTable.vue';
 import Column from 'primevue/column';
@@ -42,6 +42,13 @@ const dateFrom = ref(props.filters.date_from || '');
 const dateTo = ref(props.filters.date_to || '');
 
 const showPurchaseModal = ref(false);
+const showDetailsModal = ref(false);
+const selectedPurchase = ref(null);
+
+const openDetailsModal = (purchase) => {
+    selectedPurchase.value = purchase;
+    showDetailsModal.value = true;
+};
 
 const form = useForm({
     supplier_id: null,
@@ -227,9 +234,14 @@ const submitPurchase = () => {
             >
                 <Column field="purchase_no" header="Invoice #" style="width: 170px">
                     <template #body="{ data }">
-                        <span class="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                            {{ data.purchase_no }}
-                        </span>
+                        <Link
+                            :href="`/purchases/${data.id}`"
+                            class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded border border-indigo-200 transition inline-flex items-center gap-1.5"
+                            title="Open Invoice Details"
+                        >
+                            <i class="pi pi-file text-[11px]"></i>
+                            <span>{{ data.purchase_no }}</span>
+                        </Link>
                     </template>
                 </Column>
 
@@ -294,16 +306,20 @@ const submitPurchase = () => {
                     </template>
                 </Column>
 
-                <Column header="Actions" :exportable="false" style="width: 140px; text-align: right;">
+                <Column header="Actions" :exportable="false">
                     <template #body="{ data }">
-                        <Link
-                            :href="`/purchases/${data.id}`"
-                            class="p-button p-button-sm p-button-outlined p-button-secondary !py-1 !px-2.5 text-xs font-semibold inline-flex items-center gap-1.5"
-                            title="View & Print Invoice"
-                        >
-                            <i class="pi pi-print"></i>
-                            <span>View / Print</span>
-                        </Link>
+                        <div class="flex items-center gap-1.5 justify-end">
+                            <Button
+                                icon="pi pi-eye"
+                                label="View"
+                                size="small"
+                                outlined
+                                severity="secondary"
+                                class="!py-1 !px-2 text-xs font-semibold"
+                                title="Quick View Invoice"
+                                @click="openDetailsModal(data)"
+                            />
+                        </div>
                     </template>
                 </Column>
             </AppDataTable>
@@ -500,6 +516,118 @@ const submitPurchase = () => {
                         />
                     </div>
                 </form>
+            </Dialog>
+
+            <!-- Quick View Purchase Invoice Modal -->
+            <Dialog
+                v-model:visible="showDetailsModal"
+                :header="`Purchase Stock-In Bill: ${selectedPurchase?.purchase_no || ''}`"
+                modal
+                :style="{ width: '800px' }"
+                class="p-fluid"
+            >
+                <div v-if="selectedPurchase" class="space-y-4 pt-1">
+                    <!-- Invoice summary banner -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                        <div>
+                            <span class="text-slate-400 font-semibold block text-[10px] uppercase">Invoice No</span>
+                            <span class="font-bold text-slate-800 font-mono">{{ selectedPurchase.purchase_no }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block text-[10px] uppercase">Date</span>
+                            <span class="font-bold text-slate-800">{{ formatDate(selectedPurchase.purchase_date) }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block text-[10px] uppercase">Supplier</span>
+                            <span class="font-bold text-slate-800 truncate block">{{ selectedPurchase.supplier?.name }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block text-[10px] uppercase">Status</span>
+                            <Tag :value="selectedPurchase.status" severity="success" rounded class="text-[10px]" />
+                        </div>
+                    </div>
+
+                    <!-- Line items table -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                                <tr>
+                                    <th class="py-2.5 px-3">#</th>
+                                    <th class="py-2.5 px-3">Product</th>
+                                    <th class="py-2.5 px-3 text-center">Packaging</th>
+                                    <th class="py-2.5 px-3 text-right">Qty</th>
+                                    <th class="py-2.5 px-3 text-right">Unit Cost</th>
+                                    <th class="py-2.5 px-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-800">
+                                <tr v-for="(item, idx) in (selectedPurchase.items || [])" :key="item.id || idx">
+                                    <td class="py-2.5 px-3 font-mono text-slate-400">{{ idx + 1 }}</td>
+                                    <td class="py-2.5 px-3 font-medium">
+                                        <div class="font-bold">{{ item.product?.name || ('Product #' + (item.product_id || '')) }}</div>
+                                        <div class="text-[10px] font-mono text-slate-400">{{ item.product?.code }}</div>
+                                    </td>
+                                    <td class="py-2.5 px-3 text-center text-slate-600 uppercase text-[10px] font-mono">{{ item.packaging_type }}</td>
+                                    <td class="py-2.5 px-3 text-right font-mono font-bold">{{ Number(item.quantity).toFixed(0) }}</td>
+                                    <td class="py-2.5 px-3 text-right font-mono">৳ {{ Number(item.unit_cost).toFixed(2) }}</td>
+                                    <td class="py-2.5 px-3 text-right font-mono font-bold">৳ {{ Number(item.line_total).toFixed(2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totals & Due -->
+                    <div class="flex justify-end pt-1">
+                        <div class="w-64 space-y-1.5 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Subtotal:</span>
+                                <span class="font-mono">৳ {{ Number(selectedPurchase.subtotal || 0).toFixed(2) }}</span>
+                            </div>
+                            <div v-if="Number(selectedPurchase.discount || 0) > 0" class="flex justify-between text-amber-600">
+                                <span>Discount:</span>
+                                <span class="font-mono font-bold">- ৳ {{ Number(selectedPurchase.discount || 0).toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-slate-900 border-t pt-1">
+                                <span>Grand Total:</span>
+                                <span class="font-mono text-indigo-700">৳ {{ Number(selectedPurchase.grand_total || 0).toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-emerald-700 font-bold">
+                                <span>Paid:</span>
+                                <span class="font-mono">৳ {{ Number(selectedPurchase.paid_amount || 0).toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between font-black text-rose-600 border-t pt-1">
+                                <span>Due:</span>
+                                <span class="font-mono">৳ {{ Number(selectedPurchase.due_amount || 0).toFixed(2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+                        <Button
+                            label="Close"
+                            severity="secondary"
+                            text
+                            @click="showDetailsModal = false"
+                        />
+                        <div class="flex items-center gap-2">
+                            <Link
+                                :href="`/purchases/${selectedPurchase.id}`"
+                                class="p-button p-button-sm p-button-outlined p-button-secondary !py-1.5 !px-3 text-xs font-semibold inline-flex items-center gap-1.5"
+                            >
+                                <i class="pi pi-print"></i>
+                                <span>A4 Printable Invoice</span>
+                            </Link>
+                            <Link
+                                :href="`/purchases/${selectedPurchase.id}?format=thermal`"
+                                class="p-button p-button-sm p-button-outlined p-button-help !py-1.5 !px-3 text-xs font-semibold inline-flex items-center gap-1.5"
+                            >
+                                <i class="pi pi-receipt"></i>
+                                <span>Thermal 80mm Slip</span>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </Dialog>
         </div>
     </AppLayout>

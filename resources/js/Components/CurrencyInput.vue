@@ -35,9 +35,7 @@ const emit = defineEmits(['update:modelValue']);
     <InputNumber
         :modelValue="modelValue"
         @update:modelValue="emit('update:modelValue', $event)"
-        mode="currency"
-        currency="BDT"
-        currencyDisplay="code"
+        mode="decimal"
         locale="en-US"
         :minFractionDigits="2"
         :maxFractionDigits="2"

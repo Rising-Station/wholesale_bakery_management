@@ -30,7 +30,8 @@ class TripService
     ): LengthAwarePaginator {
         $query = VehicleTrip::with(['road', 'driver', 'creator:id,name'])
             ->withCount('items')
-            ->latest('trip_date');
+            ->orderByDesc('trip_date')
+            ->orderByDesc('id');
 
         if ($roadId) {
             $query->where('road_id', $roadId);

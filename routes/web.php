@@ -234,6 +234,10 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
     // Phase 8: Returns & Exchanges (Damage Returns & Product Exchanges)
     Route::middleware('can:damage.view')->get('damage-returns', [DamageReturnController::class, 'index'])->name('damage-returns.index');
     Route::middleware('can:damage.create')->post('damage-returns/claims', [DamageReturnController::class, 'storeClaim'])->name('damage-returns.claims.store');
+    Route::middleware('can:damage.claim')->group(function (): void {
+        Route::post('damage-returns/claims/{claim}/approve', [DamageReturnController::class, 'approveClaim'])->name('damage-returns.claims.approve');
+        Route::post('damage-returns/claims/{claim}/reject', [DamageReturnController::class, 'rejectClaim'])->name('damage-returns.claims.reject');
+    });
 
     // Phase 9: Road-Wise Sales, Collections & Stock Reconciliation
     Route::middleware('can:reports.view')->get('reports/road-settlement', [RoadReportController::class, 'index'])->name('reports.road-settlement');
