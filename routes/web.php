@@ -38,7 +38,7 @@ use Inertia\Inertia;
 
 // Public Landing Page
 Route::get('/', function () {
-    $settings = Setting::all()->pluck('value', 'key')->all();
+    $settings = Setting::allKeyed();
 
     return Inertia::render('Welcome', [
         'products' => Product::where('is_active', true)

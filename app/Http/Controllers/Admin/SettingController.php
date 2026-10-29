@@ -17,7 +17,7 @@ class SettingController extends Controller
      */
     public function index(): Response
     {
-        $settings = Setting::all()->pluck('value', 'key')->all();
+        $settings = Setting::allKeyed();
 
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,

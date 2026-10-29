@@ -74,9 +74,6 @@ const submitInquiry = () => {
                     <div>
                         <div class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
                             {{ bakeryName }}
-                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                Wholesale
-                            </span>
                         </div>
                         <div class="text-xs text-slate-400">Distribution & Supply Chain Hub</div>
                     </div>
@@ -97,13 +94,7 @@ const submitInquiry = () => {
                             class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold border-none shadow-md shadow-amber-500/20"
                         />
                     </Link>
-                    <Link v-else :href="route('login')">
-                        <Button
-                            label="Staff Login"
-                            icon="pi pi-sign-in"
-                            class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold border-none shadow-md shadow-amber-500/20"
-                        />
-                    </Link>
+                  
                 </div>
             </div>
         </header>
@@ -139,14 +130,7 @@ const submitInquiry = () => {
                         />
                     </a>
                     <Link :href="route('dashboard')">
-                        <Button
-                            label="Staff & Driver Login"
-                            icon="pi pi-lock"
-                            size="large"
-                            severity="secondary"
-                            outlined
-                            class="border-slate-700 text-slate-200 hover:bg-slate-900 px-6"
-                        />
+                       
                     </Link>
                 </div>
 
