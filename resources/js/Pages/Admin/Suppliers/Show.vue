@@ -260,6 +260,7 @@ const submitPayment = () => {
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Select Payment Method"
+                            filter
                             class="w-full text-sm"
                         />
                     </div>

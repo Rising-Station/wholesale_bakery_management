@@ -318,6 +318,7 @@ const formatMoney = (val) => {
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Delivery Road (A, B, C)"
+                            filter
                             class="w-full !rounded-xl"
                         />
                         <span v-if="form.errors.road_id" class="text-xs text-rose-600 font-medium mt-1 block">

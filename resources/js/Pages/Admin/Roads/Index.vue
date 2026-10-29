@@ -245,6 +245,7 @@ const executeDelete = () => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Choose Driver"
+                                filter
                                 :showClear="true"
                                 @change="onDriverSelected"
                                 class="w-full !rounded-xl"

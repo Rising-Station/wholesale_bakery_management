@@ -145,6 +145,7 @@ const deleteExpense = (id) => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Categories"
+                        filter
                         showClear
                         class="w-full text-xs"
                         @change="filterData"
@@ -158,6 +159,7 @@ const deleteExpense = (id) => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Routes / Depot"
+                        filter
                         showClear
                         class="w-full text-xs"
                         @change="filterData"
@@ -267,6 +269,7 @@ const deleteExpense = (id) => {
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Expense Category"
+                            filter
                             class="w-full text-sm"
                             required
                         />
@@ -281,6 +284,7 @@ const deleteExpense = (id) => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Route Incurred (Road A/B/C)"
+                                filter
                                 showClear
                                 class="w-full text-sm"
                                 @change="onRoadChange(form.road_id)"
@@ -329,6 +333,7 @@ const deleteExpense = (id) => {
                                 :options="paymentMethods"
                                 optionLabel="label"
                                 optionValue="value"
+                                filter
                                 class="w-full text-sm"
                                 required
                             />

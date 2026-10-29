@@ -305,6 +305,7 @@ const rejectClaim = (claim) => {
                                 optionLabel="label"
                                 optionValue="value"
                                 placeholder="All Types"
+                                filter
                                 class="w-full text-sm"
                                 @change="filterData"
                             />
@@ -317,6 +318,7 @@ const rejectClaim = (claim) => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="All Roads"
+                                filter
                                 showClear
                                 class="w-full text-sm"
                                 @change="filterData"
@@ -330,6 +332,7 @@ const rejectClaim = (claim) => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="All Products"
+                                filter
                                 showClear
                                 class="w-full text-sm"
                                 @change="filterData"
@@ -602,6 +605,7 @@ const rejectClaim = (claim) => {
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Supplier"
+                            filter
                             class="w-full text-sm"
                             :class="{ 'p-invalid': claimForm.errors.supplier_id }"
                         />
@@ -618,6 +622,7 @@ const rejectClaim = (claim) => {
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Product"
+                            filter
                             class="w-full text-sm"
                             :class="{ 'p-invalid': claimForm.errors.product_id }"
                             @change="(e) => onProductSelect(e.value)"

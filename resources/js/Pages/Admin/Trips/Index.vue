@@ -199,6 +199,7 @@ const getStatusBadge = (status) => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Roads"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -216,6 +217,7 @@ const getStatusBadge = (status) => {
                         optionLabel="label"
                         optionValue="value"
                         placeholder="All Statuses"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -360,6 +362,7 @@ const getStatusBadge = (status) => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Select Distribution Road"
+                                filter
                                 class="w-full text-sm"
                                 :class="{ 'p-invalid': form.errors.road_id }"
                                 @update:modelValue="onRoadSelect"
@@ -445,6 +448,7 @@ const getStatusBadge = (status) => {
                                         optionLabel="name"
                                         optionValue="id"
                                         placeholder="Select Product"
+                                        filter
                                         class="w-full text-xs"
                                         @change="(e) => onProductSelect(idx, e.value)"
                                     />
