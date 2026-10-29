@@ -20,7 +20,7 @@
     "src": "node_modules/primeicons/fonts/primeicons.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-B2Fjz0sN.css",
+    "file": "assets/app-vNJlHln8.css",
     "name": "app",
     "names": [
       "app.css"
@@ -36,13 +36,13 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Dob1DQ5h.js",
+    "file": "assets/app-CgfdPiA1.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-BEGrxHpa.css",
-      "assets/app-B2Fjz0sN.css"
+      "assets/app-BatQbYU7.css",
+      "assets/app-vNJlHln8.css"
     ],
     "assets": [
       "assets/primeicons-BZF8q66I.eot",
