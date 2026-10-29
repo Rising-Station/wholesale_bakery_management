@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Retailer\StoreRetailerRequest;
 use App\Http\Requests\Retailer\UpdateRetailerRequest;
+use App\Models\RetailerInquiry;
 use App\Models\RetailerShop;
 use App\Models\Road;
 use App\Services\RetailerService;
@@ -34,6 +35,7 @@ class RetailerController extends Controller
         return Inertia::render('Admin/Retailers/Index', [
             'retailers' => $retailers,
             'roads' => $roads,
+            'inquiries' => RetailerInquiry::with('road:id,name,code')->latest()->take(30)->get(),
             'filters' => [
                 'road_id' => $roadId,
                 'search' => $search,

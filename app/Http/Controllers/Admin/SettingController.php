@@ -42,10 +42,21 @@ class SettingController extends Controller
                 'sms_alerts_enabled' => ['required', 'in:0,1'],
                 'enable_credit_limit_warnings' => ['required', 'in:0,1'],
                 'enable_demo_login' => ['sometimes', 'in:0,1'],
+                'hero_badge' => ['nullable', 'string', 'max:255'],
+                'hero_title' => ['nullable', 'string', 'max:255'],
+                'hero_subtitle' => ['nullable', 'string', 'max:1000'],
+                'tier1_title' => ['nullable', 'string', 'max:255'],
+                'tier1_description' => ['nullable', 'string', 'max:1000'],
+                'tier2_title' => ['nullable', 'string', 'max:255'],
+                'tier2_description' => ['nullable', 'string', 'max:1000'],
+                'tier3_title' => ['nullable', 'string', 'max:255'],
+                'tier3_description' => ['nullable', 'string', 'max:1000'],
+                'partnership_title' => ['nullable', 'string', 'max:255'],
+                'partnership_subtitle' => ['nullable', 'string', 'max:1000'],
             ]);
 
             foreach ($data as $key => $val) {
-                Setting::set($key, (string) $val, 'general');
+                Setting::set($key, (string) ($val ?? ''), 'general');
             }
 
             return redirect()->route('settings.index')

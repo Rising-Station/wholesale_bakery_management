@@ -23,6 +23,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    inquiries: {
+        type: Array,
+        default: () => [],
+    },
     filters: {
         type: Object,
         default: () => ({ road_id: null, search: '' }),
@@ -36,6 +40,18 @@ const showModal = ref(false);
 const editingShop = ref(null);
 const showDeleteModal = ref(false);
 const shopToDelete = ref(null);
+const showInquiriesModal = ref(false);
+
+const enrollFromInquiry = (inquiry) => {
+    form.reset();
+    form.shop_name = inquiry.shop_name || '';
+    form.owner_name = inquiry.owner_name || '';
+    form.phone = inquiry.phone || '';
+    form.road_id = inquiry.road_id || null;
+    showInquiriesModal.value = false;
+    editingShop.value = null;
+    showModal.value = true;
+};
 
 const form = useForm({
     road_id: null,
@@ -193,13 +209,26 @@ const formatMoney = (val) => {
                     />
                 </div>
 
-                <Button
-                    type="button"
-                    icon="pi pi-plus"
-                    label="Register Retailer Shop"
-                    @click="openCreateModal"
-                    class="!bg-amber-500 hover:!bg-amber-600 !text-slate-950 font-bold !border-none !rounded-xl text-xs w-full sm:w-auto"
-                />
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <Button
+                        v-if="inquiries.length > 0"
+                        type="button"
+                        icon="pi pi-inbox"
+                        :label="`Website Inquiries (${inquiries.length})`"
+                        severity="info"
+                        outlined
+                        size="small"
+                        @click="showInquiriesModal = true"
+                        class="!rounded-xl text-xs w-full sm:w-auto"
+                    />
+                    <Button
+                        type="button"
+                        icon="pi pi-plus"
+                        label="Register Retailer Shop"
+                        @click="openCreateModal"
+                        class="!bg-amber-500 hover:!bg-amber-600 !text-slate-950 font-bold !border-none !rounded-xl text-xs w-full sm:w-auto"
+                    />
+                </div>
             </div>
 
             <!-- Retailers DataTable -->
@@ -400,6 +429,49 @@ const formatMoney = (val) => {
                         />
                     </div>
                 </form>
+            </Dialog>
+
+            <!-- Website Dealership Inquiries Modal -->
+            <Dialog
+                v-model:visible="showInquiriesModal"
+                header="Public Website Dealership & Partnership Inquiries"
+                :modal="true"
+                class="w-full max-w-3xl"
+            >
+                <div class="space-y-4 py-2">
+                    <div v-if="!inquiries.length" class="text-center py-8 text-slate-400 text-sm">
+                        No pending dealership inquiries from the website.
+                    </div>
+                    <div
+                        v-for="inq in inquiries"
+                        :key="inq.id"
+                        class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-900 text-sm">{{ inq.shop_name }}</span>
+                                <span v-if="inq.road" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                    {{ inq.road.name }} ({{ inq.road.code }})
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-600 flex items-center gap-3">
+                                <span><i class="pi pi-user text-[10px] text-slate-400"></i> {{ inq.owner_name }}</span>
+                                <span><i class="pi pi-phone text-[10px] text-slate-400"></i> {{ inq.phone }}</span>
+                            </div>
+                            <p v-if="inq.message" class="text-xs text-slate-500 italic">
+                                "{{ inq.message }}"
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            icon="pi pi-user-plus"
+                            label="Enroll Shop"
+                            size="small"
+                            class="!bg-emerald-600 hover:!bg-emerald-700 !text-white font-bold !border-none !rounded-xl text-xs shrink-0"
+                            @click="enrollFromInquiry(inq)"
+                        />
+                    </div>
+                </div>
             </Dialog>
 
             <!-- Confirm Delete Modal -->
