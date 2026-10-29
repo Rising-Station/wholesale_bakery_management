@@ -28,6 +28,7 @@ class StoreStockAdjustmentRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.action_type' => ['nullable', 'string', 'in:IN,OUT,COUNT'],
             'items.*.physical_stock' => ['required', 'numeric', 'min:0'],
         ];
     }

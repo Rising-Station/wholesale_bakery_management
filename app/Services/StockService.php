@@ -65,7 +65,8 @@ class StockService
         ?string $dateTo = null
     ): LengthAwarePaginator {
         $query = StockMovement::with(['product', 'creator:id,name'])
-            ->latest('id');
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if ($productId) {
             $query->where('product_id', $productId);
@@ -162,6 +163,13 @@ class StockService
                     $product->warehouse_stock = $physicalStock;
                     $product->save();
 
+                    $actionType = $itemData['action_type'] ?? null;
+                    $actionLabel = match ($actionType) {
+                        'IN' => 'Stock In (+)',
+                        'OUT' => 'Stock Out (-)',
+                        default => 'Physical Audit Variance',
+                    };
+
                     $this->recordMovement(
                         product: $product,
                         type: StockMovementType::AuditAdjustment,
@@ -172,7 +180,7 @@ class StockService
                         balanceAfter: $physicalStock,
                         referenceType: 'StockAdjustment',
                         referenceId: $adjustment->id,
-                        remarks: "Physical Audit Variance ({$data['reason']})",
+                        remarks: "{$actionLabel} ({$data['reason']})",
                         userId: $user
                     );
                 }
@@ -188,7 +196,8 @@ class StockService
     public function getAdjustments(): LengthAwarePaginator
     {
         return StockAdjustment::with(['creator:id,name', 'approver:id,name', 'items.product'])
-            ->latest('id')
+            ->orderByDesc('adjustment_date')
+            ->orderByDesc('id')
             ->paginate(20);
     }
 }

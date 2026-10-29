@@ -8,3 +8,11 @@
 - Need to activate Thermal 80mm tab Slip Printing for /memos/{id}
 - Need to clear form in every modal after submitting or closing it
 - Add 2 categories (Cake, Chanachur), 2 products in seeder (Cake - 100 cartoon, Chanachur 5kg   packet 100 qty)
+
+- [x] Remove BDT from purchase input field
+- [x] All lists should be descending date order
+- [x] Purchase Invoice view and print are not working
+- [x] Add stock in-out option in "Stock Adjustment"
+- [x] Make Dynamic shop name top panel bar
+
+- Search in dropdown (for all dropdowns)

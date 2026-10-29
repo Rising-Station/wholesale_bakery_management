@@ -964,8 +964,6 @@ const getStatusBadge = (status) => {
                                             v-if="ret.return_unit === 'KG' || ret.return_unit === 'PCS'"
                                             v-model.number="ret.sub_unit_quantity"
                                             type="number"
-                          
-                                           
                                             class="w-full text-xs py-1.5 text-center font-bold"
                                             @input="() => onSubUnitQtyChange(idx)"
                                         />

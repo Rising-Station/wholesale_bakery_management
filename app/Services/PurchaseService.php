@@ -31,7 +31,8 @@ class PurchaseService
         ?string $dateTo = null
     ): LengthAwarePaginator {
         $query = Purchase::with(['supplier', 'items.product', 'creator:id,name'])
-            ->latest('purchase_date');
+            ->orderByDesc('purchase_date')
+            ->orderByDesc('id');
 
         if ($supplierId) {
             $query->where('supplier_id', $supplierId);

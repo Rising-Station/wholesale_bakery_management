@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Throwable;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -35,8 +37,19 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $shopName = 'Mominul Bekari';
+        try {
+            $shopName = Setting::get('bakery_name', 'Mominul Bekari');
+        } catch (Throwable) {
+            // Fallback if settings table is not yet migrated
+        }
+
         return [
             ...parent::share($request),
+            'shop_name' => $shopName,
+            'settings' => [
+                'bakery_name' => $shopName,
+            ],
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

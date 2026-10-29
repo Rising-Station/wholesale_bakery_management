@@ -39,7 +39,11 @@ class MemoController extends Controller
         $memos = $this->memoService->getFilteredMemos($roadId, $retailerId, $search, $dateFrom, $dateTo);
         $roads = Road::where('is_active', true)->select('id', 'name', 'code')->orderBy('code')->get();
         $retailers = RetailerShop::where('is_active', true)->select('id', 'road_id', 'shop_name', 'owner_name', 'phone', 'current_due')->orderBy('shop_name')->get();
-        $trips = VehicleTrip::whereIn('status', ['LOADED', 'DISPATCHED'])->with('items.product')->latest('id')->get();
+        $trips = VehicleTrip::whereIn('status', ['LOADED', 'DISPATCHED'])
+            ->with('items.product')
+            ->orderByDesc('trip_date')
+            ->orderByDesc('id')
+            ->get();
         $products = Product::where('is_active', true)
             ->select('id', 'name', 'code', 'wholesale_price', 'warehouse_stock', 'packaging_type', 'units_per_cartoon', 'pieces_per_packet', 'weight_per_unit_kg')
             ->orderBy('name')

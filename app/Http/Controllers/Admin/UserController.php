@@ -37,7 +37,8 @@ class UserController extends Controller
                     $q->where('name', $roleFilter);
                 });
             })
-            ->latest('id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get()
             ->map(function (User $user) {
                 return [

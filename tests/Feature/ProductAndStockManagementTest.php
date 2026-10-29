@@ -280,6 +280,65 @@ class ProductAndStockManagementTest extends TestCase
         ]);
     }
 
+    public function test_stock_adjustment_supports_stock_in_and_stock_out_operations(): void
+    {
+        $product = Product::create([
+            'name' => 'Special Dry Cake',
+            'code' => 'DC-SPECIAL',
+            'packaging_type' => PackagingType::Cartoon->value,
+            'cost_price' => 60.00,
+            'wholesale_price' => 80.00,
+            'warehouse_stock' => 100.00,
+            'min_alert_quantity' => 10,
+        ]);
+
+        // 1. Direct Stock In (+)
+        $responseIn = $this->post(route('stock-adjustments.store'), [
+            'adjustment_date' => now()->toDateString(),
+            'reason' => 'Surplus stock inward found',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'action_type' => 'IN',
+                    'physical_stock' => 125.00,
+                ],
+            ],
+        ]);
+
+        $responseIn->assertRedirect(route('stock-adjustments.index'));
+        $this->assertEquals(125.00, (float) $product->fresh()->warehouse_stock);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'quantity' => 25.00,
+            'balance_before' => 100.00,
+            'balance_after' => 125.00,
+            'remarks' => 'Stock In (+) (Surplus stock inward found)',
+        ]);
+
+        // 2. Direct Stock Out (-)
+        $responseOut = $this->post(route('stock-adjustments.store'), [
+            'adjustment_date' => now()->toDateString(),
+            'reason' => 'Expired stock discarded',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'action_type' => 'OUT',
+                    'physical_stock' => 110.00,
+                ],
+            ],
+        ]);
+
+        $responseOut->assertRedirect(route('stock-adjustments.index'));
+        $this->assertEquals(110.00, (float) $product->fresh()->warehouse_stock);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'quantity' => 15.00,
+            'balance_before' => 125.00,
+            'balance_after' => 110.00,
+            'remarks' => 'Stock Out (-) (Expired stock discarded)',
+        ]);
+    }
+
     public function test_product_validation_rules_enforce_required_fields(): void
     {
         $response = $this->post(route('products.store'), []);

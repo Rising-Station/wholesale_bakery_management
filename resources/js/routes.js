@@ -35,6 +35,7 @@ const routePatterns = {
     'suppliers.payments.store': '/suppliers/payments',
     'purchases.index': '/purchases',
     'purchases.store': '/purchases',
+    'purchases.show': (id) => `/purchases/${id}`,
 
     // Roads & Retailers
     'roads.index': '/roads',
@@ -66,6 +67,9 @@ const routePatterns = {
     'damage-returns.index': '/damage-returns',
     'damage-returns.store': '/damage-returns',
     'damage-returns.claim': '/damage-returns/claim',
+    'damage-returns.claims.store': '/damage-returns/claims',
+    'damage-returns.claims.approve': (id) => `/damage-returns/claims/${id}/approve`,
+    'damage-returns.claims.reject': (id) => `/damage-returns/claims/${id}/reject`,
 
     // Reports
     'reports.road-settlement': '/reports/road-settlement',

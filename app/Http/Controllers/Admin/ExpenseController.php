@@ -30,7 +30,8 @@ class ExpenseController extends Controller
         $dateTo = $request->input('date_to');
 
         $query = Expense::with(['category', 'road', 'creator:id,name'])
-            ->latest('expense_date');
+            ->orderByDesc('expense_date')
+            ->orderByDesc('id');
 
         if ($categoryId) {
             $query->where('expense_category_id', $categoryId);

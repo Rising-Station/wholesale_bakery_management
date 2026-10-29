@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -13,6 +13,9 @@ const props = defineProps({
     },
 });
 
+const page = usePage();
+const shopName = computed(() => page.props?.shop_name || page.props?.settings?.bakery_name || 'Mominul Bekari');
+
 const printFormat = ref('A4'); // 'A4' or 'THERMAL'
 
 onMounted(() => {
@@ -20,7 +23,7 @@ onMounted(() => {
     if (params.get('format') === 'thermal') {
         printFormat.value = 'THERMAL';
     }
-    if (params.get('print') === 'true') {
+    if (params.get('print') === 'true' || params.get('auto_print') === '1') {
         setTimeout(() => {
             window.print();
         }, 300);
@@ -33,8 +36,8 @@ const printInvoice = () => {
 </script>
 
 <template>
-    <AppLayout>
-        <Head :title="`Purchase Invoice: ${purchase.purchase_no}`" />
+    <AppLayout :title="`Purchase Invoice: ${purchase.purchase_no || ''}`">
+        <Head :title="`Purchase Invoice: ${purchase.purchase_no || ''}`" />
 
         <div class="space-y-6 max-w-4xl mx-auto">
             <!-- Non-printable Toolbar -->
@@ -88,7 +91,7 @@ const printInvoice = () => {
                 <div class="border-b-2 border-slate-900 pb-6 flex justify-between items-start">
                     <div>
                         <h1 class="text-3xl font-black uppercase tracking-wider text-slate-900">
-                            Mominul Bekari
+                            {{ shopName }}
                         </h1>
                         <p class="text-xs uppercase tracking-widest text-slate-500 font-semibold mt-0.5">
                             Central Warehouse & Wholesale Hub
@@ -111,8 +114,8 @@ const printInvoice = () => {
                 <div class="grid grid-cols-2 gap-6 py-6 border-b border-slate-200 text-xs">
                     <div>
                         <span class="text-slate-400 font-semibold uppercase text-[10px] block mb-1">Supplier / Manufacturer</span>
-                        <div class="font-bold text-sm text-slate-900">{{ purchase.supplier?.name }}</div>
-                        <div class="text-slate-600">{{ purchase.supplier?.company_name }}</div>
+                        <div class="font-bold text-sm text-slate-900">{{ purchase.supplier?.name || 'N/A' }}</div>
+                        <div class="text-slate-600">{{ purchase.supplier?.company_name || '' }}</div>
                         <div class="text-slate-500 mt-1">Phone: {{ purchase.supplier?.phone || 'N/A' }}</div>
                         <div class="text-slate-500">Address: {{ purchase.supplier?.address || 'N/A' }}</div>
                     </div>
@@ -141,23 +144,23 @@ const printInvoice = () => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(item, idx) in purchase.items" :key="item.id" class="text-slate-800">
+                            <tr v-for="(item, idx) in (purchase.items || [])" :key="item.id || idx" class="text-slate-800">
                                 <td class="py-2.5 font-mono text-slate-400">{{ idx + 1 }}</td>
                                 <td class="py-2.5 font-medium">
-                                    <div class="font-bold">{{ item.product?.name }}</div>
-                                    <div class="text-[10px] font-mono text-slate-400">{{ item.product?.code }}</div>
+                                    <div class="font-bold">{{ item.product?.name || ('Product #' + (item.product_id || '')) }}</div>
+                                    <div class="text-[10px] font-mono text-slate-400">{{ item.product?.code || '-' }}</div>
                                 </td>
                                 <td class="py-2.5 text-slate-600 uppercase text-[11px] font-mono">
                                     {{ item.packaging_type }}
                                 </td>
                                 <td class="py-2.5 text-right font-mono font-bold">
-                                    {{ Number(item.quantity).toLocaleString() }}
+                                    {{ Number(item.quantity || 0).toLocaleString() }}
                                 </td>
                                 <td class="py-2.5 text-right font-mono">
-                                    {{ Number(item.unit_cost).toFixed(2) }}
+                                    {{ Number(item.unit_cost || 0).toFixed(2) }}
                                 </td>
                                 <td class="py-2.5 text-right font-mono font-bold">
-                                    {{ Number(item.line_total).toFixed(2) }}
+                                    {{ Number(item.line_total || 0).toFixed(2) }}
                                 </td>
                             </tr>
                         </tbody>
@@ -169,23 +172,23 @@ const printInvoice = () => {
                     <div class="w-72 space-y-2 text-xs">
                         <div class="flex justify-between text-slate-600">
                             <span>Subtotal:</span>
-                            <span class="font-mono">৳ {{ Number(purchase.subtotal).toFixed(2) }}</span>
+                            <span class="font-mono">৳ {{ Number(purchase.subtotal || 0).toFixed(2) }}</span>
                         </div>
-                        <div v-if="Number(purchase.discount) > 0" class="flex justify-between text-amber-600">
+                        <div v-if="Number(purchase.discount || 0) > 0" class="flex justify-between text-amber-600">
                             <span>- Discount:</span>
-                            <span class="font-mono font-bold">- ৳ {{ Number(purchase.discount).toFixed(2) }}</span>
+                            <span class="font-mono font-bold">- ৳ {{ Number(purchase.discount || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between font-bold text-slate-900 border-t border-slate-300 pt-1.5">
                             <span>Grand Total Bill:</span>
-                            <span class="font-mono text-sm text-indigo-700">৳ {{ Number(purchase.grand_total).toFixed(2) }}</span>
+                            <span class="font-mono text-sm text-indigo-700">৳ {{ Number(purchase.grand_total || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between text-emerald-700 font-bold">
                             <span>- Amount Paid:</span>
-                            <span class="font-mono">৳ {{ Number(purchase.paid_amount).toFixed(2) }}</span>
+                            <span class="font-mono">৳ {{ Number(purchase.paid_amount || 0).toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between font-black text-rose-600 text-sm border-t border-slate-400 pt-1.5">
                             <span>Outstanding Due:</span>
-                            <span class="font-mono">৳ {{ Number(purchase.due_amount).toFixed(2) }}</span>
+                            <span class="font-mono">৳ {{ Number(purchase.due_amount || 0).toFixed(2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -211,10 +214,10 @@ const printInvoice = () => {
             <!-- ========================================== -->
             <div
                 v-else
-                class="thermal-slip bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mx-auto w-[340px] text-slate-900 font-mono text-xs print:w-[78mm] print:border-none print:shadow-none print:p-0"
+                class="thermal-slip thermal-receipt-container bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mx-auto w-[340px] text-slate-900 font-mono text-xs print:w-[78mm] print:border-none print:shadow-none print:p-0"
             >
                 <div class="text-center border-b border-dashed border-slate-400 pb-3">
-                    <h1 class="text-lg font-black uppercase tracking-wider">MOMINUL BEKARI</h1>
+                    <h1 class="text-lg font-black uppercase tracking-wider">{{ shopName }}</h1>
                     <p class="text-[10px] text-slate-600 uppercase">Central Warehouse Stock-In</p>
                     <p class="text-[10px] text-slate-500">Phone: 01711-000001</p>
                     <div class="mt-2 text-xs font-bold">{{ purchase.purchase_no }}</div>
@@ -222,8 +225,8 @@ const printInvoice = () => {
                 </div>
 
                 <div class="py-2.5 border-b border-dashed border-slate-400 text-[11px]">
-                    <div class="font-bold text-slate-900">{{ purchase.supplier?.name }}</div>
-                    <div>{{ purchase.supplier?.company_name }}</div>
+                    <div class="font-bold text-slate-900">{{ purchase.supplier?.name || 'N/A' }}</div>
+                    <div>{{ purchase.supplier?.company_name || '' }}</div>
                     <div>Phone: {{ purchase.supplier?.phone || 'N/A' }}</div>
                 </div>
 
@@ -235,12 +238,12 @@ const printInvoice = () => {
                         <span>Total</span>
                     </div>
 
-                    <div v-for="item in purchase.items" :key="item.id" class="text-[11px] py-0.5">
-                        <div class="font-bold truncate">{{ item.product?.name }}</div>
+                    <div v-for="(item, idx) in (purchase.items || [])" :key="item.id || idx" class="text-[11px] py-0.5">
+                        <div class="font-bold truncate">{{ item.product?.name || 'Product' }}</div>
                         <div class="flex justify-between text-slate-600 text-[10px]">
-                            <span>{{ item.product?.code }}</span>
-                            <span>{{ Number(item.quantity).toFixed(0) }} x {{ Number(item.unit_cost).toFixed(0) }}</span>
-                            <span class="font-bold text-slate-900">৳{{ Number(item.line_total).toFixed(0) }}</span>
+                            <span>{{ item.product?.code || '-' }}</span>
+                            <span>{{ Number(item.quantity || 0).toFixed(0) }} x {{ Number(item.unit_cost || 0).toFixed(0) }}</span>
+                            <span class="font-bold text-slate-900">৳{{ Number(item.line_total || 0).toFixed(0) }}</span>
                         </div>
                     </div>
                 </div>
@@ -249,21 +252,21 @@ const printInvoice = () => {
                 <div class="py-2.5 border-b-2 border-slate-900 space-y-1 text-xs">
                     <div class="flex justify-between">
                         <span>Total Bill:</span>
-                        <span class="font-bold">৳ {{ Number(purchase.grand_total).toFixed(0) }}</span>
+                        <span class="font-bold">৳ {{ Number(purchase.grand_total || 0).toFixed(0) }}</span>
                     </div>
                     <div class="flex justify-between text-emerald-700 font-bold">
                         <span>Paid:</span>
-                        <span>৳ {{ Number(purchase.paid_amount).toFixed(0) }}</span>
+                        <span>৳ {{ Number(purchase.paid_amount || 0).toFixed(0) }}</span>
                     </div>
                     <div class="flex justify-between font-black text-rose-600 text-sm border-t pt-1">
                         <span>Due:</span>
-                        <span>৳ {{ Number(purchase.due_amount).toFixed(0) }}</span>
+                        <span>৳ {{ Number(purchase.due_amount || 0).toFixed(0) }}</span>
                     </div>
                 </div>
 
                 <div class="text-center text-[10px] text-slate-500 pt-3">
                     Warehouse Inward Recorded<br />
-                    Mominul Bekari Hub
+                    {{ shopName }} Hub
                 </div>
             </div>
         </div>
@@ -286,6 +289,12 @@ const printInvoice = () => {
     }
     aside, header, nav, .print\:hidden {
         display: none !important;
+    }
+    .thermal-receipt-container {
+        width: 76mm !important;
+        max-width: 76mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
 }
 </style>

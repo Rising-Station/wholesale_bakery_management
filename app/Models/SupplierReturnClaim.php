@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'status',
     'notes',
     'created_by',
+    'approved_by',
+    'settled_at',
 ])]
 class SupplierReturnClaim extends Model
 {
@@ -35,6 +37,7 @@ class SupplierReturnClaim extends Model
             'quantity' => 'decimal:2',
             'unit_cost' => 'decimal:2',
             'claim_amount' => 'decimal:2',
+            'settled_at' => 'datetime',
         ];
     }
 
@@ -52,5 +55,21 @@ class SupplierReturnClaim extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    /**
+     * Staff member who filed the claim.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Manager/Staff who approved and settled the claim.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

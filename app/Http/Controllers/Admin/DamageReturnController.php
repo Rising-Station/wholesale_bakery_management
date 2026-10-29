@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PaymentMethod;
 use App\Enums\ReturnType;
 use App\Http\Controllers\Controller;
 use App\Models\DamageReturn;
@@ -10,11 +11,13 @@ use App\Models\Product;
 use App\Models\RetailerShop;
 use App\Models\Road;
 use App\Models\Supplier;
+use App\Models\SupplierPayment;
 use App\Models\SupplierReturnClaim;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,7 +36,8 @@ class DamageReturnController extends Controller
         $dateTo = $request->input('date_to');
 
         $query = DamageReturn::with(['retailer', 'product', 'salesMemo'])
-            ->latest('id');
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if ($returnType) {
             $query->where('return_type', $returnType);
@@ -72,11 +76,18 @@ class DamageReturnController extends Controller
 
         $roads = Road::where('is_active', true)->select('id', 'name', 'code')->get();
         $retailers = RetailerShop::where('is_active', true)->select('id', 'shop_name')->get();
-        $products = Product::where('is_active', true)->select('id', 'name', 'code', 'weight_per_unit_kg', 'units_per_cartoon', 'pieces_per_packet', 'packaging_type', 'wholesale_price')->get();
-        $suppliers = Supplier::where('is_active', true)->select('id', 'name', 'company_name')->get();
+        $products = Product::where('is_active', true)->select('id', 'name', 'code', 'weight_per_unit_kg', 'units_per_cartoon', 'pieces_per_packet', 'packaging_type', 'wholesale_price', 'cost_price')->get();
+        $suppliers = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'current_due')->get();
+
+        $claims = SupplierReturnClaim::with(['supplier:id,name,company_name,current_due', 'product:id,name,code,packaging_type', 'creator:id,name', 'approver:id,name'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(20, ['*'], 'claims_page')
+            ->withQueryString();
 
         return Inertia::render('Admin/Returns/Index', [
             'returns' => $returns,
+            'claims' => $claims,
             'roads' => $roads,
             'retailers' => $retailers,
             'products' => $products,
@@ -88,6 +99,8 @@ class DamageReturnController extends Controller
                 'repack_holding_quantity' => (float) $repackHoldingCount,
                 'repack_holding_weight' => (float) $repackHoldingWeight,
                 'repack_holding_pieces' => (int) $repackHoldingPieces,
+                'pending_claims_count' => (int) SupplierReturnClaim::where('status', 'PENDING')->count(),
+                'approved_claims_total' => (float) SupplierReturnClaim::where('status', 'APPROVED')->sum('claim_amount'),
             ],
             'filters' => [
                 'return_type' => $returnType,
@@ -135,5 +148,116 @@ class DamageReturnController extends Controller
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Approve a Supplier Return Claim and deduct the claim amount from Supplier Due (Credit Note).
+     */
+    public function approveClaim(SupplierReturnClaim $claim): RedirectResponse
+    {
+        if ($claim->status !== 'PENDING') {
+            return back()->with('error', "This claim is already {$claim->status}.");
+        }
+
+        try {
+            DB::transaction(function () use ($claim): void {
+                $user = Auth::id();
+
+                // 1. Update claim status
+                $claim->update([
+                    'status' => 'APPROVED',
+                    'approved_by' => $user,
+                    'settled_at' => now(),
+                ]);
+
+                // 2. Deduct claim amount from Supplier Current Due
+                /** @var Supplier $supplier */
+                $supplier = Supplier::lockForUpdate()->findOrFail($claim->supplier_id);
+                $supplier->current_due = max(0, round((float) $supplier->current_due - (float) $claim->claim_amount, 2));
+                $supplier->save();
+
+                // 3. Log credit payment transaction in supplier_payments
+                SupplierPayment::create([
+                    'supplier_id' => $supplier->id,
+                    'payment_method' => PaymentMethod::ReturnAdjustment->value,
+                    'amount' => $claim->claim_amount,
+                    'payment_date' => now()->toDateString(),
+                    'transaction_ref' => $claim->claim_no,
+                    'notes' => "Damage Return Claim Credit Note: {$claim->quantity} units of {$claim->product?->name} ({$claim->reason})",
+                    'created_by' => $user,
+                ]);
+
+                // 4. Clear quarantined scrap inventory units
+                $remaining = (float) $claim->quantity;
+                $quarantined = DamageScrapInventory::where('product_id', $claim->product_id)
+                    ->where('status', 'QUARANTINED')
+                    ->orderBy('created_at')
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($quarantined as $item) {
+                    if ($remaining <= 0) {
+                        break;
+                    }
+
+                    $itemQty = (float) $item->quantity;
+                    if ($itemQty <= $remaining) {
+                        $remaining -= $itemQty;
+                        $item->update([
+                            'status' => 'RETURNED_TO_SUPPLIER',
+                            'disposal_date' => now()->toDateString(),
+                            'disposal_notes' => "Returned to supplier {$supplier->name} under claim #{$claim->claim_no}",
+                        ]);
+                    } else {
+                        $clearedQty = $remaining;
+                        $item->decrement('quantity', $clearedQty);
+
+                        DamageScrapInventory::create([
+                            'product_id' => $item->product_id,
+                            'retailer_id' => $item->retailer_id,
+                            'road_id' => $item->road_id,
+                            'damage_type' => $item->damage_type,
+                            'category' => $item->category,
+                            'quantity' => $clearedQty,
+                            'status' => 'RETURNED_TO_SUPPLIER',
+                            'disposal_date' => now()->toDateString(),
+                            'disposal_notes' => "Returned to supplier {$supplier->name} under claim #{$claim->claim_no}",
+                            'created_by' => $user,
+                        ]);
+                        $remaining = 0;
+                    }
+                }
+            });
+
+            return back()->with('success', "Claim '{$claim->claim_no}' approved! ৳ ".number_format((float) $claim->claim_amount, 2)." deducted from {$claim->supplier?->name}'s due balance, and quarantined scrap cleared.");
+        } catch (Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject a Supplier Return Claim.
+     */
+    public function rejectClaim(SupplierReturnClaim $claim, Request $request): RedirectResponse
+    {
+        if ($claim->status !== 'PENDING') {
+            return back()->with('error', "This claim is already {$claim->status}.");
+        }
+
+        $validated = $request->validate([
+            'rejection_reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $notes = $claim->notes ? $claim->notes."\n" : '';
+        $notes .= 'Rejected: '.($validated['rejection_reason'] ?? 'Factory refused claim.');
+
+        $claim->update([
+            'status' => 'REJECTED',
+            'notes' => $notes,
+            'approved_by' => Auth::id(),
+            'settled_at' => now(),
+        ]);
+
+        return back()->with('info', "Claim '{$claim->claim_no}' marked as REJECTED.");
     }
 }
