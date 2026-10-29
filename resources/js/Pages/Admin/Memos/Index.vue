@@ -569,6 +569,7 @@ const getStatusBadge = (status) => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Roads"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -582,6 +583,7 @@ const getStatusBadge = (status) => {
                         optionLabel="shop_name"
                         optionValue="id"
                         placeholder="All Retailers"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -731,6 +733,7 @@ const getStatusBadge = (status) => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Select Road"
+                                filter
                                 class="w-full text-sm"
                                 @update:modelValue="onRoadSelect"
                             />
@@ -747,6 +750,7 @@ const getStatusBadge = (status) => {
                                 optionLabel="label"
                                 optionValue="id"
                                 placeholder="Select Trip or Direct Sale"
+                                filter
                                 class="w-full text-sm"
                                 @update:modelValue="onTripChange"
                             />
@@ -763,6 +767,7 @@ const getStatusBadge = (status) => {
                                 optionLabel="shop_name"
                                 optionValue="id"
                                 placeholder="Select Shop on Road"
+                                filter
                                 class="w-full text-sm"
                             />
                             <div v-if="selectedRetailerInfo" class="text-xs text-rose-600 font-bold mt-1">
@@ -820,6 +825,7 @@ const getStatusBadge = (status) => {
                                         optionLabel="name"
                                         optionValue="id"
                                         placeholder="Select In-Stock Product"
+                                        filter
                                         class="w-full text-xs"
                                         @change="(e) => onProductSelect(idx, e.value)"
                                     />
@@ -920,6 +926,7 @@ const getStatusBadge = (status) => {
                                             optionLabel="name"
                                             optionValue="id"
                                             placeholder="Select Returned Product"
+                                            filter
                                             class="w-full text-xs"
                                             @change="(e) => onReturnProductSelect(idx, e.value)"
                                         />
@@ -935,6 +942,7 @@ const getStatusBadge = (status) => {
                                             ]"
                                             optionLabel="label"
                                             optionValue="value"
+                                            filter
                                             class="w-full text-xs"
                                             @change="() => onReturnTypeChange(idx)"
                                         />
@@ -948,6 +956,7 @@ const getStatusBadge = (status) => {
                                             :options="getAvailableUnitsForProduct(ret.product_id)"
                                             optionLabel="label"
                                             optionValue="value"
+                                            filter
                                             class="w-full text-xs"
                                             @change="() => onReturnUnitChange(idx)"
                                         />
@@ -1049,6 +1058,7 @@ const getStatusBadge = (status) => {
                                     :options="paymentMethods"
                                     optionLabel="label"
                                     optionValue="value"
+                                    filter
                                     class="w-full text-sm"
                                 />
                             </div>
@@ -1129,6 +1139,7 @@ const getStatusBadge = (status) => {
                             optionLabel="shop_name"
                             optionValue="id"
                             placeholder="Select Retailer"
+                            filter
                             class="w-full text-sm"
                             @change="(e) => {
                                 const r = retailers.find(shop => shop.id === e.value);
@@ -1156,6 +1167,7 @@ const getStatusBadge = (status) => {
                             :options="paymentMethods"
                             optionLabel="label"
                             optionValue="value"
+                            filter
                             class="w-full text-sm"
                         />
                     </div>

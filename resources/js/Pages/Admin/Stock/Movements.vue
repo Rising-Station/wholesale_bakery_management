@@ -110,6 +110,7 @@ const formatDate = (isoString) => formatDateTime(isoString);
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Products"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -123,6 +124,7 @@ const formatDate = (isoString) => formatDateTime(isoString);
                         optionLabel="label"
                         optionValue="value"
                         placeholder="All Movement Types"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"

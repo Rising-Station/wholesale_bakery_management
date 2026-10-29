@@ -130,6 +130,7 @@ const submitSettings = () => {
                                 :options="toggleOptions"
                                 optionLabel="label"
                                 optionValue="value"
+                                filter
                                 class="w-full text-sm"
                             />
                             <span class="text-[11px] text-slate-400">Send dispatch & payment SMS to shop owners.</span>
@@ -142,6 +143,7 @@ const submitSettings = () => {
                                 :options="toggleOptions"
                                 optionLabel="label"
                                 optionValue="value"
+                                filter
                                 class="w-full text-sm"
                             />
                             <span class="text-[11px] text-slate-400">Warn salesperson if retailer exceeds credit limit.</span>
@@ -154,6 +156,7 @@ const submitSettings = () => {
                                 :options="toggleOptions"
                                 optionLabel="label"
                                 optionValue="value"
+                                filter
                                 class="w-full text-sm"
                             />
                             <span class="text-[11px] text-slate-400">Show or hide 1-click staff demo credentials on the login screen.</span>

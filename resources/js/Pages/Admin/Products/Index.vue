@@ -517,6 +517,7 @@ const generateSku = () => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Categories"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -530,6 +531,7 @@ const generateSku = () => {
                         optionLabel="label"
                         optionValue="value"
                         placeholder="All Packaging Types"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"
@@ -732,6 +734,7 @@ const generateSku = () => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Select Category"
+                                filter
                                 class="w-full text-sm"
                             />
                             <small v-if="form.errors.category_id" class="text-rose-500 text-xs">{{ form.errors.category_id }}</small>
@@ -757,6 +760,7 @@ const generateSku = () => {
                                 optionLabel="label"
                                 optionValue="value"
                                 placeholder="Select Packaging Type"
+                                filter
                                 class="w-full text-sm"
                             />
                             <small v-if="form.errors.packaging_type" class="text-rose-500 text-xs">{{ form.errors.packaging_type }}</small>
@@ -782,6 +786,7 @@ const generateSku = () => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Select Unit (e.g. Pcs, Pkt, Ctn)"
+                                filter
                                 showClear
                                 class="w-full text-sm"
                             />

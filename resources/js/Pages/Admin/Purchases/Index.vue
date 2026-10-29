@@ -210,6 +210,7 @@ const submitPurchase = () => {
                         optionValue="id"
                         placeholder="All Suppliers"
                         showClear
+                        filter
                         class="w-full text-sm"
                         @change="filterData"
                     />
@@ -346,6 +347,7 @@ const submitPurchase = () => {
                                 optionLabel="name"
                                 optionValue="id"
                                 placeholder="Select Supplier"
+                                filter
                                 class="w-full text-sm"
                                 :class="{ 'p-invalid': form.errors.supplier_id }"
                             />
@@ -398,6 +400,7 @@ const submitPurchase = () => {
                                         optionLabel="name"
                                         optionValue="id"
                                         placeholder="Select Product"
+                                        filter
                                         class="w-full text-xs"
                                         @change="(e) => onProductSelect(idx, e.value)"
                                     />
@@ -467,6 +470,7 @@ const submitPurchase = () => {
                                     :options="paymentMethods"
                                     optionLabel="label"
                                     optionValue="value"
+                                    filter
                                     class="w-full text-sm"
                                 />
                             </div>

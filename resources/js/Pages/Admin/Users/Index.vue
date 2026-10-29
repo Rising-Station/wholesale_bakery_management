@@ -147,6 +147,7 @@ const executeDelete = () => {
                         v-model="selectedRoleFilter"
                         :options="roles"
                         placeholder="All Roles"
+                        filter
                         :showClear="true"
                         @change="filterData"
                         class="w-full sm:w-48 !text-xs !rounded-xl"
@@ -318,6 +319,7 @@ const executeDelete = () => {
                                 v-model="form.role"
                                 :options="roles"
                                 placeholder="Select Role"
+                                filter
                                 class="w-full !rounded-xl"
                             />
                             <span v-if="form.errors.role" class="text-xs text-rose-600 font-medium mt-1 block">

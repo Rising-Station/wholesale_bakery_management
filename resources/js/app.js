@@ -9,8 +9,15 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import DialogService from 'primevue/dialogservice';
 import Tooltip from 'primevue/tooltip';
+import Select from 'primevue/select';
 import { route } from './routes';
 import { formatDate, formatDateTime } from './Utils/date';
+
+// Enable search filtering by default for all PrimeVue Select dropdowns
+const selectProps = Select?.props || Select?.extends?.props;
+if (selectProps) {
+    selectProps.filter = { type: Boolean, default: true };
+}
 
 window.route = route;
 

@@ -176,6 +176,7 @@ const toggleLowStockFilter = () => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="All Categories"
+                        filter
                         showClear
                         class="w-full text-sm"
                         @change="filterData"

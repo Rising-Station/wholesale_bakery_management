@@ -15,4 +15,4 @@
 - [x] Add stock in-out option in "Stock Adjustment"
 - [x] Make Dynamic shop name top panel bar
 
-- Search in dropdown (for all dropdowns)
+- [x] Search in dropdown (for all dropdowns)
