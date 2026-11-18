@@ -101,6 +101,120 @@ class ExpenseAndSettingsTest extends TestCase
         $this->assertDatabaseMissing('expenses', ['id' => $expense->id]);
     }
 
+    public function test_user_can_create_expense_category(): void
+    {
+        $response = $this->post(route('expenses.categories.store'), [
+            'name' => 'Generator Fuel & Servicing',
+            'code' => 'GENERATOR',
+            'description' => 'Factory power backup generator fuel and service',
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect(route('expenses.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('expense_categories', [
+            'name' => 'Generator Fuel & Servicing',
+            'code' => 'GENERATOR',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_user_can_create_expense_category_with_auto_generated_code(): void
+    {
+        $response = $this->post(route('expenses.categories.store'), [
+            'name' => 'Van Tyre Replacement',
+        ]);
+
+        $response->assertRedirect(route('expenses.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('expense_categories', [
+            'name' => 'Van Tyre Replacement',
+            'code' => 'VAN_TYRE_REPLACEMENT',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_user_can_update_expense_category(): void
+    {
+        $category = ExpenseCategory::create([
+            'name' => 'Old Category Name',
+            'code' => 'OLD_CODE',
+            'description' => 'Old description',
+            'is_active' => true,
+        ]);
+
+        $response = $this->put(route('expenses.categories.update', $category), [
+            'name' => 'Updated Category Name',
+            'code' => 'UPDATED_CODE',
+            'description' => 'New detailed description',
+            'is_active' => false,
+        ]);
+
+        $response->assertRedirect(route('expenses.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('expense_categories', [
+            'id' => $category->id,
+            'name' => 'Updated Category Name',
+            'code' => 'UPDATED_CODE',
+            'description' => 'New detailed description',
+            'is_active' => false,
+        ]);
+    }
+
+    public function test_user_can_delete_unused_expense_category(): void
+    {
+        $category = ExpenseCategory::create([
+            'name' => 'Temporary Category',
+            'code' => 'TEMP_CAT',
+            'is_active' => true,
+        ]);
+
+        $response = $this->delete(route('expenses.categories.destroy', $category));
+
+        $response->assertRedirect(route('expenses.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('expense_categories', [
+            'id' => $category->id,
+        ]);
+    }
+
+    public function test_cannot_delete_expense_category_with_existing_expenses(): void
+    {
+        $category = ExpenseCategory::first();
+
+        Expense::create([
+            'expense_category_id' => $category->id,
+            'expense_date' => now()->toDateString(),
+            'amount' => 500.00,
+            'payment_method' => PaymentMethod::Cash->value,
+            'notes' => 'Existing operational cost',
+        ]);
+
+        $response = $this->delete(route('expenses.categories.destroy', $category));
+
+        $response->assertRedirect(route('expenses.index'));
+        $response->assertSessionHas('error');
+
+        $this->assertDatabaseHas('expense_categories', [
+            'id' => $category->id,
+        ]);
+    }
+
+    public function test_expense_category_validation_requires_unique_name(): void
+    {
+        $existing = ExpenseCategory::first();
+
+        $response = $this->post(route('expenses.categories.store'), [
+            'name' => $existing->name,
+        ]);
+
+        $response->assertSessionHasErrors(['name']);
+    }
+
     public function test_user_can_view_settings_and_update_settings(): void
     {
         $response = $this->get(route('settings.index'));

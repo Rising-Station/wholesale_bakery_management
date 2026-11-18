@@ -609,9 +609,14 @@ const getStatusBadge = (status) => {
             >
                 <Column field="memo_no" header="Memo #" style="width: 170px">
                     <template #body="{ data }">
-                        <span class="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                            {{ data.memo_no }}
-                        </span>
+                        <div>
+                            <span class="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200 inline-block">
+                                {{ data.memo_no }}
+                            </span>
+                            <span v-if="data.creator?.name" class="text-[10px] text-slate-500 block mt-1">
+                                By: <strong class="text-slate-700">{{ data.creator.name }}</strong>
+                            </span>
+                        </div>
                     </template>
                 </Column>
 

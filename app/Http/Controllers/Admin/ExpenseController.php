@@ -52,7 +52,8 @@ class ExpenseController extends Controller
         $totalAmount = (float) (clone $query)->sum('amount');
         $expenses = $query->paginate(20)->withQueryString();
 
-        $categories = ExpenseCategory::where('is_active', true)->orderBy('name')->get();
+        $allCategories = ExpenseCategory::withCount('expenses')->orderBy('name')->get();
+        $categories = $allCategories->where('is_active', true)->values();
         $roads = Road::where('is_active', true)->select('id', 'name', 'code', 'vehicle_number')->orderBy('code')->get();
 
         $paymentMethods = array_map(fn ($case) => [
@@ -63,6 +64,7 @@ class ExpenseController extends Controller
         return Inertia::render('Admin/Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
+            'allCategories' => $allCategories,
             'roads' => $roads,
             'paymentMethods' => $paymentMethods,
             'totalAmount' => $totalAmount,

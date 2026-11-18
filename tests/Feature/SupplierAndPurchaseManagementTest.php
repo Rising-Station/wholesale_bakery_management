@@ -206,6 +206,7 @@ class SupplierAndPurchaseManagementTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('Admin/Purchases/Show')
             ->has('purchase')
+            ->has('purchase.creator')
             ->where('purchase.id', $purchase->id)
             ->where('purchase.purchase_no', 'PUR-VIEW-001')
         );

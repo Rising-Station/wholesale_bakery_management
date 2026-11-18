@@ -44,11 +44,12 @@ class HandleInertiaRequests extends Middleware
         $currencySymbol = '৳';
 
         try {
-            $shopName = Setting::get('bakery_name', 'Mominul Bekari');
-            $bakeryPhone = Setting::get('bakery_phone', '+880 1711-000004');
-            $bakeryEmail = Setting::get('bakery_email', 'sales@mominulbekari.com');
-            $bakeryAddress = Setting::get('bakery_address', 'Central Distribution Hub, Commercial Road Zone, Dhaka');
-            $currencySymbol = Setting::get('currency_symbol', '৳');
+            $settings = Setting::all()->pluck('value', 'key');
+            $shopName = $settings->get('bakery_name', 'Mominul Bekari');
+            $bakeryPhone = $settings->get('bakery_phone', '+880 1711-000004');
+            $bakeryEmail = $settings->get('bakery_email', 'sales@mominulbekari.com');
+            $bakeryAddress = $settings->get('bakery_address', 'Central Distribution Hub, Commercial Road Zone, Dhaka');
+            $currencySymbol = $settings->get('currency_symbol', '৳');
         } catch (Throwable) {
             // Fallback if settings table is not yet migrated
         }
