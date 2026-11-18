@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\DamageReturnController;
+use App\Http\Controllers\Admin\ExpenseCategoryController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\MemoController;
 use App\Http\Controllers\Admin\PackagingTypeController;
@@ -285,10 +286,22 @@ Route::middleware(['auth', 'active.user'])->group(function (): void {
     // Phase 9: Road-Wise Sales, Collections & Stock Reconciliation
     Route::middleware('can:reports.view')->get('reports/road-settlement', [RoadReportController::class, 'index'])->name('reports.road-settlement');
 
-    // Phase 10: Operational Expenses, Settings, DB Backup & Polish
-    Route::middleware('can:expenses.view')->get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
-    Route::middleware('can:expenses.create')->post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
-    Route::middleware('can:expenses.delete')->delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    // Phase 10: Operational Expenses, Expense Categories, Settings, DB Backup & Polish
+    Route::middleware('can:expenses.view')->group(function (): void {
+        Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('expenses/categories', [ExpenseCategoryController::class, 'index'])->name('expenses.categories.index');
+    });
+    Route::middleware('can:expenses.create')->group(function (): void {
+        Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+        Route::post('expenses/categories', [ExpenseCategoryController::class, 'store'])->name('expenses.categories.store');
+    });
+    Route::middleware('can:expenses.edit')->group(function (): void {
+        Route::put('expenses/categories/{category}', [ExpenseCategoryController::class, 'update'])->name('expenses.categories.update');
+    });
+    Route::middleware('can:expenses.delete')->group(function (): void {
+        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+        Route::delete('expenses/categories/{category}', [ExpenseCategoryController::class, 'destroy'])->name('expenses.categories.destroy');
+    });
 
     Route::middleware('can:settings.manage')->group(function (): void {
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');

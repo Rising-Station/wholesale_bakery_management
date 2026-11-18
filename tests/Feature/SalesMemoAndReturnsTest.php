@@ -335,6 +335,10 @@ class SalesMemoAndReturnsTest extends TestCase
 
         $response = $this->get(route('memos.show', $memo));
         $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Memos/Show')
+            ->has('memo.creator')
+        );
     }
 
     public function test_damage_returns_audit_index_renders_successfully(): void

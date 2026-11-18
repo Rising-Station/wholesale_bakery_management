@@ -235,14 +235,19 @@ const submitPurchase = () => {
             >
                 <Column field="purchase_no" header="Invoice #" style="width: 170px">
                     <template #body="{ data }">
-                        <Link
-                            :href="`/purchases/${data.id}`"
-                            class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded border border-indigo-200 transition inline-flex items-center gap-1.5"
-                            title="Open Invoice Details"
-                        >
-                            <i class="pi pi-file text-[11px]"></i>
-                            <span>{{ data.purchase_no }}</span>
-                        </Link>
+                        <div>
+                            <Link
+                                :href="`/purchases/${data.id}`"
+                                class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded border border-indigo-200 transition inline-flex items-center gap-1.5"
+                                title="Open Invoice Details"
+                            >
+                                <i class="pi pi-file text-[11px]"></i>
+                                <span>{{ data.purchase_no }}</span>
+                            </Link>
+                            <span v-if="data.creator?.name" class="text-[10px] text-slate-500 block mt-1">
+                                By: <strong class="text-slate-700">{{ data.creator.name }}</strong>
+                            </span>
+                        </div>
                     </template>
                 </Column>
 
@@ -532,7 +537,7 @@ const submitPurchase = () => {
             >
                 <div v-if="selectedPurchase" class="space-y-4 pt-1">
                     <!-- Invoice summary banner -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                         <div>
                             <span class="text-slate-400 font-semibold block text-[10px] uppercase">Invoice No</span>
                             <span class="font-bold text-slate-800 font-mono">{{ selectedPurchase.purchase_no }}</span>
@@ -544,6 +549,10 @@ const submitPurchase = () => {
                         <div>
                             <span class="text-slate-400 font-semibold block text-[10px] uppercase">Supplier</span>
                             <span class="font-bold text-slate-800 truncate block">{{ selectedPurchase.supplier?.name }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-semibold block text-[10px] uppercase">Logged By</span>
+                            <span class="font-bold text-slate-800">{{ selectedPurchase.creator?.name || 'Authorized Staff' }}</span>
                         </div>
                         <div>
                             <span class="text-slate-400 font-semibold block text-[10px] uppercase">Status</span>

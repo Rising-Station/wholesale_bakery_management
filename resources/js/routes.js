@@ -78,10 +78,14 @@ const routePatterns = {
     // Reports
     'reports.road-settlement': '/reports/road-settlement',
 
-    // Expenses
+    // Expenses & Expense Categories
     'expenses.index': '/expenses',
     'expenses.store': '/expenses',
     'expenses.destroy': (id) => `/expenses/${id}`,
+    'expenses.categories.index': '/expenses/categories',
+    'expenses.categories.store': '/expenses/categories',
+    'expenses.categories.update': (id) => `/expenses/categories/${id}`,
+    'expenses.categories.destroy': (id) => `/expenses/categories/${id}`,
 
     // Users & Roles
     'users.index': '/users',

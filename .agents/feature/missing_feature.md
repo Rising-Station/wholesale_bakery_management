@@ -21,3 +21,5 @@
 - [x] Retailer Partnership form "Select Delivery Road" Should be a dropdown and road should be dynamic.
 
 - [x] Make "General Setting", "Homepage CMS" submenu under "Settings" dropdowns in sidebar
+
+- [x] Expense category CRUD

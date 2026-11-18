@@ -330,7 +330,7 @@ const printSheet = () => {
                                             v-model="item.returned_quantity"
                                             :min="0"
                                             :maxFractionDigits="2"
-                                            class="w-24 text-center font-mono font-bold text-sm"
+                                            class="w-auto text-center font-mono font-bold text-sm"
                                             inputClass="text-center py-1.5 px-2 font-mono font-bold text-slate-900"
                                         />
                                     </div>
